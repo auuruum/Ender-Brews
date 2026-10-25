@@ -1,0 +1,27 @@
+// Bukkit / Spigot / Paper / Purpur plugin. Compiled against the Spigot API only, so the
+// same jar runs on Spigot and on everything built on top of it.
+plugins {
+    id 'enderbrews-platform'
+}
+
+// The plugin has no access to vanilla classes, so it only gets the plain Java core.
+ext.sharedPackages = ['core']
+
+repositories {
+    maven {
+        name = 'Spigot'
+        url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/'
+    }
+    maven {
+        name = 'Sonatype snapshots'
+        url = 'https://oss.sonatype.org/content/repositories/snapshots'
+    }
+    maven {
+        name = 'Minecraft libraries'
+        url = 'https://libraries.minecraft.net'
+    }
+}
+
+dependencies {
+    compileOnly "org.spigotmc:spigot-api:${spigot_api_version}"
+}

@@ -1,0 +1,12 @@
+{
+  "name": "enderbrews-ingame-test",
+  "private": true,
+  "description": "Starts a real server with the Ender Brews jar and checks it with a vanilla bot.",
+  "scripts": {
+    "test": "node test.js"
+  },
+  "dependencies": {
+    "mineflayer": "^4.39.0",
+    "prismarine-nbt": "^2.7.0"
+  }
+}

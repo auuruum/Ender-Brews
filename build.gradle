@@ -1,0 +1,56 @@
+plugins {
+    // see https://fabricmc.net/develop/ for new versions
+    id 'fabric-loom' version '1.8-SNAPSHOT' apply false
+    // see https://projects.neoforged.net/neoforged/moddevgradle for new versions
+    id 'net.neoforged.moddev' version '2.0.49-beta' apply false
+}
+
+evaluationDependsOnChildren()
+
+// One jar that is at the same time a Fabric/Quilt mod, a NeoForge mod, a Forge mod
+// and a Bukkit/Spigot/Paper plugin. Each loader only reads its own metadata file
+// (fabric.mod.json, META-INF/neoforge.mods.toml, META-INF/mods.toml, plugin.yml)
+// and only ever loads classes from its own dev.enderbrews.<platform> package.
+def platformJars = [
+        ':fabric'  : 'remapJar',
+        ':neoforge': 'jar',
+        ':forge'   : 'jar',
+        ':bukkit'  : 'jar',
+]
+
+tasks.register('universalJar', Jar) {
+    group = 'build'
+    description = 'Builds the single Ender Brews jar for every platform.'
+
+    archiveBaseName = 'EnderBrews'
+    archiveVersion = "${version}+mc${minecraft_version}"
+    destinationDirectory = layout.buildDirectory.dir('libs')
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    platformJars.each { path, taskName ->
+        def platformJar = project(path).tasks.named(taskName)
+        dependsOn(platformJar)
+        from({ zipTree(platformJar.get().archiveFile) }) {
+            exclude 'META-INF/MANIFEST.MF'
+        }
+    }
+
+    manifest {
+        attributes([
+                'Specification-Title'           : mod_name,
+                'Specification-Vendor'          : mod_author,
+                'Specification-Version'         : version,
+                'Implementation-Title'          : mod_name,
+                'Implementation-Version'        : version,
+                'Implementation-Vendor'         : mod_author,
+                'Built-On-Minecraft'            : minecraft_version,
+                // The plugin only uses the Bukkit API, so Paper does not need to remap the jar.
+                'paperweight-mappings-namespace': 'mojang'
+        ])
+    }
+}
+
+tasks.register('build') {
+    group = 'build'
+    dependsOn('universalJar')
+}

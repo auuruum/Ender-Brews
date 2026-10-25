@@ -1,0 +1,19 @@
+name: EnderBrews
+version: '${version}'
+main: dev.enderbrews.bukkit.EnderBrewsPlugin
+api-version: '${bukkit_api_version}'
+author: ${mod_author}
+description: '${description}'
+website: ${homepage}
+commands:
+  enderbrews:
+    description: Show your endless effects and pause or resume them.
+    usage: /enderbrews [toggle|pause|resume <effect> | reload]
+    permission: enderbrews.use
+permissions:
+  enderbrews.use:
+    description: Use /enderbrews to see and pause your endless effects.
+    default: true
+  enderbrews.reload:
+    description: Reload the Ender Brews config.
+    default: op

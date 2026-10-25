@@ -1,0 +1,30 @@
+// Every platform compiles its own copy of the shared sources, relocated from
+// dev.enderbrews.shared.* to dev.enderbrews.<platform>.*. This is what lets all
+// platforms live side by side in one universal jar: Fabric needs the vanilla code
+// remapped to intermediary names while the others run on Mojang names, so a single
+// shared copy of those classes could never work everywhere.
+plugins {
+    id 'enderbrews-java'
+}
+
+ext.sharedPackages = ext.has('sharedPackages') ? ext.sharedPackages : ['core', 'common']
+
+def sharedProject = project(':shared')
+def platformName = project.name
+
+def generateShared = tasks.register('generateSharedSources', Sync) {
+    from(sharedProject.file('src/main/java')) {
+        project.ext.sharedPackages.each { include "dev/enderbrews/shared/${it}/**" }
+    }
+    into(layout.buildDirectory.dir('generated/sharedSources'))
+    includeEmptyDirs = false
+    eachFile { it.path = it.path.replace('dev/enderbrews/shared/', "dev/enderbrews/${platformName}/") }
+    filter { String line -> line.replace('dev.enderbrews.shared.', "dev.enderbrews.${platformName}.") }
+    inputs.property('sharedPackages', project.ext.sharedPackages)
+}
+
+sourceSets.main.java.srcDir(generateShared)
+
+processResources {
+    from(sharedProject.file('src/main/resources'))
+}

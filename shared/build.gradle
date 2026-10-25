@@ -1,0 +1,26 @@
+// Holds the code shared by all platforms. It is compiled here only so the IDE and the
+// unit tests can check it; the platforms compile their own relocated copies.
+//   dev.enderbrews.shared.core   - plain Java (rules, config, translations), used everywhere
+//   dev.enderbrews.shared.common - vanilla Minecraft code, used by Fabric, NeoForge and Forge
+plugins {
+    id 'enderbrews-java'
+    id 'net.neoforged.moddev'
+}
+
+neoForge {
+    neoFormVersion = neo_form_version
+    parchment {
+        minecraftVersion = parchment_minecraft
+        mappingsVersion = parchment_version
+    }
+}
+
+dependencies {
+    testImplementation platform('org.junit:junit-bom:5.11.3')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+test {
+    useJUnitPlatform()
+}
