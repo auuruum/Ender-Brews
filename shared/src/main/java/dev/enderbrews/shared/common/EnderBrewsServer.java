@@ -4,8 +4,10 @@ import dev.enderbrews.shared.core.EffectStatus;
 import dev.enderbrews.shared.core.EnderBrewsConfig;
 import dev.enderbrews.shared.core.EndlessRules;
 import dev.enderbrews.shared.core.PauseStore;
+import dev.enderbrews.shared.core.Protocol;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -23,12 +25,14 @@ public final class EnderBrewsServer {
 
     private final Path configFile;
     private final PauseStore pauses;
+    private final ServerNetwork network;
     private final Map<UUID, PlayerState> players = new HashMap<>();
     private EnderBrewsConfig config = EnderBrewsConfig.defaults();
     private long ticks;
 
-    EnderBrewsServer(MinecraftServer server, Path configDir) {
+    EnderBrewsServer(MinecraftServer server, Path configDir, ServerNetwork network) {
         this.configFile = configDir.resolve(EnderBrewsConfig.FILE_NAME);
+        this.network = network;
         this.pauses = new PauseStore(server.getWorldPath(LevelResource.ROOT).resolve("enderbrews-paused.txt"));
         try {
             reload();
@@ -95,6 +99,33 @@ public final class EnderBrewsServer {
 
     void setPaused(ServerPlayer player, String effectId, boolean paused) {
         pauses.setPaused(player.getUUID(), effectId, paused);
+        savePausesAndRefresh(player);
+    }
+
+    /** Pauses every endless effect, or resumes every paused one. */
+    void setAllPaused(ServerPlayer player, boolean paused) {
+        for (EffectStatus status : statuses(player)) {
+            if (status.state() == EffectStatus.State.ACTIVE) {
+                pauses.setPaused(player.getUUID(), status.effectId(), paused);
+            }
+        }
+        savePausesAndRefresh(player);
+    }
+
+    /** A pause request from a client that has the mod (its pause button or key). */
+    void handlePausePacket(ServerPlayer player, byte[] data) {
+        Protocol.PauseRequest request = Protocol.decodePause(data);
+        if (request == null || !config.allowPause()) {
+            return;
+        }
+        if (request.effectId() == null) {
+            setAllPaused(player, request.paused());
+        } else if (VanillaEffects.holder(request.effectId()).isPresent()) {
+            setPaused(player, request.effectId(), request.paused());
+        }
+    }
+
+    private void savePausesAndRefresh(ServerPlayer player) {
         try {
             pauses.save();
         } catch (IOException e) {
@@ -121,11 +152,28 @@ public final class EnderBrewsServer {
         });
         state.applied = endless;
         state.dirty = false;
+        syncStatus(player, state);
+    }
+
+    /** Tells a client that has the mod where its effects stand, whenever that changes. */
+    private void syncStatus(ServerPlayer player, PlayerState state) {
+        if (network == null || !network.canSendStatus(player)) {
+            return;
+        }
+        List<Protocol.Entry> entries = state.statuses.stream()
+                .map(status -> new Protocol.Entry(status, isPaused(player, status.effectId())))
+                .toList();
+        byte[] data = Protocol.encodeSnapshot(new Protocol.Snapshot(config.allowPause(), entries));
+        if (!Arrays.equals(data, state.lastSent)) {
+            state.lastSent = data;
+            network.sendStatus(player, data);
+        }
     }
 
     private static final class PlayerState {
         List<EffectStatus> statuses = List.of();
         Map<Holder<MobEffect>, Integer> applied = new LinkedHashMap<>();
         boolean dirty = true;
+        byte[] lastSent;
     }
 }

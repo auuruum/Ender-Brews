@@ -4,7 +4,9 @@ import dev.enderbrews.bukkit.core.EffectStatus;
 import dev.enderbrews.bukkit.core.EnderBrewsConfig;
 import dev.enderbrews.bukkit.core.EndlessRules;
 import dev.enderbrews.bukkit.core.PauseStore;
+import dev.enderbrews.bukkit.core.Protocol;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -45,6 +47,10 @@ public final class EnderBrewsPlugin extends JavaPlugin implements Listener {
         }
 
         getServer().getPluginManager().registerEvents(this, this);
+        // Clients that have the mod get status packets and can send pause requests.
+        getServer().getMessenger().registerOutgoingPluginChannel(this, Protocol.STATUS_CHANNEL);
+        getServer().getMessenger().registerIncomingPluginChannel(this, Protocol.PAUSE_CHANNEL,
+                (channel, player, message) -> handlePausePacket(player, message));
         PluginCommand command = Objects.requireNonNull(getCommand("enderbrews"));
         BukkitCommand executor = new BukkitCommand(this);
         command.setExecutor(executor);
@@ -115,6 +121,32 @@ public final class EnderBrewsPlugin extends JavaPlugin implements Listener {
 
     void setPaused(Player player, String effectId, boolean paused) {
         pauses.setPaused(player.getUniqueId(), effectId, paused);
+        savePausesAndRefresh(player);
+    }
+
+    /** Pauses every endless effect, or resumes every paused one. */
+    void setAllPaused(Player player, boolean paused) {
+        for (EffectStatus status : statuses(player)) {
+            if (status.state() == EffectStatus.State.ACTIVE) {
+                pauses.setPaused(player.getUniqueId(), status.effectId(), paused);
+            }
+        }
+        savePausesAndRefresh(player);
+    }
+
+    private void handlePausePacket(Player player, byte[] data) {
+        Protocol.PauseRequest request = Protocol.decodePause(data);
+        if (request == null || !config.allowPause()) {
+            return;
+        }
+        if (request.effectId() == null) {
+            setAllPaused(player, request.paused());
+        } else if (BukkitEffects.type(request.effectId()) != null) {
+            setPaused(player, request.effectId(), request.paused());
+        }
+    }
+
+    private void savePausesAndRefresh(Player player) {
         try {
             pauses.save();
         } catch (IOException e) {
@@ -146,11 +178,28 @@ public final class EnderBrewsPlugin extends JavaPlugin implements Listener {
         });
         state.applied = endless;
         state.dirty = false;
+        syncStatus(player, state);
+    }
+
+    /** Tells a client that has the mod where its effects stand, whenever that changes. */
+    private void syncStatus(Player player, PlayerState state) {
+        if (!player.getListeningPluginChannels().contains(Protocol.STATUS_CHANNEL)) {
+            return;
+        }
+        List<Protocol.Entry> entries = state.statuses.stream()
+                .map(status -> new Protocol.Entry(status, isPaused(player, status.effectId())))
+                .toList();
+        byte[] data = Protocol.encodeSnapshot(new Protocol.Snapshot(config.allowPause(), entries));
+        if (!Arrays.equals(data, state.lastSent)) {
+            state.lastSent = data;
+            player.sendPluginMessage(this, Protocol.STATUS_CHANNEL, data);
+        }
     }
 
     private static final class PlayerState {
         List<EffectStatus> statuses = List.of();
         Map<PotionEffectType, Integer> applied = new LinkedHashMap<>();
         boolean dirty = true;
+        byte[] lastSent;
     }
 }

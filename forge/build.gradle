@@ -15,7 +15,11 @@ minecraft {
         client {
             workingDirectory file('runs/client')
             ideaModule "${rootProject.name}.${project.name}.main"
-            taskName 'Client'
+            taskName 'runClient'
+            // ./gradlew :forge:runClient -PquickPlay=localhost:25565 joins that server right away
+            if (project.hasProperty('quickPlay')) {
+                args '--quickPlayMultiplayer', project.property('quickPlay').toString()
+            }
             mods {
                 modClientRun {
                     source sourceSets.main
@@ -26,7 +30,7 @@ minecraft {
         server {
             workingDirectory file('runs/server')
             ideaModule "${rootProject.name}.${project.name}.main"
-            taskName 'Server'
+            taskName 'runServer'
             mods {
                 modServerRun {
                     source sourceSets.main

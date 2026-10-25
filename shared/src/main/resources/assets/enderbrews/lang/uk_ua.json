@@ -1,0 +1,12 @@
+{
+    "key.categories.enderbrews": "Ender Brews",
+    "key.enderbrews.pause_all": "Пауза / увімкнення всіх вічних ефектів",
+    "enderbrews.tooltip.endless": "∞ %s: вічний",
+    "enderbrews.tooltip.paused": "⏸ %s: вічний, на паузі",
+    "enderbrews.tooltip.progress": "%s: %s/%s в ендер-скрині",
+    "enderbrews.tooltip.limited": "%s: понад ліміт вічних ефектів",
+    "enderbrews.tooltip.blocked": "%s: тут не може стати вічним",
+    "enderbrews.effect.paused": "На паузі",
+    "enderbrews.effect.click_pause": "Натисни, щоб поставити на паузу",
+    "enderbrews.effect.click_resume": "Натисни, щоб увімкнути"
+}

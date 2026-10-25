@@ -7,6 +7,7 @@ import com.mojang.brigadier.suggestion.SuggestionProvider;
 import dev.enderbrews.shared.core.EffectStatus;
 import dev.enderbrews.shared.core.EnderBrewsConfig;
 import dev.enderbrews.shared.core.Lang;
+import dev.enderbrews.shared.core.Protocol;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
@@ -76,12 +77,14 @@ final class EnderBrewsCommand {
     /**
      * Sends the whole list as one chat message. Vanilla clients cannot edit a message that was
      * already sent, so pause/resume send the list again: the newest copy at the bottom of the chat
-     * always shows the current state.
+     * always shows the current state. A client that has the mod spots the hidden marker and removes
+     * the older copy, so for those players the list updates in place.
      */
     private static void sendList(ServerPlayer player, EnderBrewsServer server, String locale) {
         EnderBrewsConfig config = server.config();
         List<EffectStatus> statuses = server.statuses(player);
         MutableComponent message = Component.empty()
+                .append(Component.literal("").withStyle(Style.EMPTY.withInsertion(Protocol.LIST_MARKER)))
                 .append(format(locale, "list.header", Component.literal(String.valueOf(config.threshold())))
                         .withStyle(ChatFormatting.LIGHT_PURPLE));
         if (statuses.isEmpty()) {

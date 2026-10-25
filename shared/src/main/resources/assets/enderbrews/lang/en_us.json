@@ -1,0 +1,12 @@
+{
+    "key.categories.enderbrews": "Ender Brews",
+    "key.enderbrews.pause_all": "Pause / resume all endless effects",
+    "enderbrews.tooltip.endless": "∞ %s: endless",
+    "enderbrews.tooltip.paused": "⏸ %s: endless, paused",
+    "enderbrews.tooltip.progress": "%s: %s/%s in Ender Chest",
+    "enderbrews.tooltip.limited": "%s: over the endless effect limit",
+    "enderbrews.tooltip.blocked": "%s: can't become endless here",
+    "enderbrews.effect.paused": "Paused",
+    "enderbrews.effect.click_pause": "Click to pause",
+    "enderbrews.effect.click_resume": "Click to resume"
+}

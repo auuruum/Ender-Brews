@@ -82,7 +82,29 @@ function effect(data, id) {
   return null;
 }
 
-const potion = p => `minecraft:potion[minecraft:potion_contents={potion:"minecraft:${p}"}]`;
+// Minimal reader for the Ender Brews status packet (see shared/.../core/Protocol.java).
+function decodeStatus(buf) {
+  let pos = 0;
+  const varInt = () => { let v = 0, s = 0, b; do { b = buf[pos++]; v |= (b & 0x7f) << s; s += 7; } while (b & 0x80); return v; };
+  const str = () => { const n = varInt(); const t = buf.toString('utf8', pos, pos + n); pos += n; return t; };
+  if (buf[pos++] !== 1) return null;
+  const allowPause = buf[pos++] === 1;
+  const entries = [];
+  for (let i = varInt(); i > 0; i--) {
+    entries.push({ id: str(), amplifier: varInt(), count: varInt(), threshold: varInt(),
+      state: ['ACTIVE', 'PROGRESS', 'LIMITED', 'BLOCKED'][buf[pos++]], paused: buf[pos++] === 1 });
+  }
+  return { allowPause, entries };
+}
+
+function pausePacket(effectId, paused) {
+  const parts = [Buffer.from([1, effectId ? 1 : 0])];
+  if (effectId) { const id = Buffer.from(effectId, 'utf8'); parts.push(Buffer.from([id.length]), id); }
+  parts.push(Buffer.from([paused ? 1 : 0]));
+  return Buffer.concat(parts);
+}
+
+const potion = p =>`minecraft:potion[minecraft:potion_contents={potion:"minecraft:${p}"}]`;
 function fill(from, to, p) { for (let i = from; i <= to; i++) send(`item replace entity ${BOT} enderchest.${i} with ${potion(p)}`); }
 function clearSlot(i) { send(`item replace entity ${BOT} enderchest.${i} with minecraft:air`); }
 
@@ -108,8 +130,13 @@ async function main() {
   check('Ender Brews is loaded', LOADED[platform].test(fullLog), 'not found in log');
 
   const messages = [];
+  const rawMessages = [];
+  const statuses = [];
   const bot = mineflayer.createBot({ host: '127.0.0.1', port: PORT, username: BOT, version: '1.21.1', auth: 'offline' });
-  bot.on('message', m => messages.push(m.toString()));
+  bot.on('message', m => { messages.push(m.toString()); rawMessages.push(JSON.stringify(m.json)); });
+  bot._client.on('custom_payload', packet => {
+    if (packet.channel === 'enderbrews:status') statuses.push(decodeStatus(packet.data));
+  });
   const kicked = new Promise(r => bot.once('kicked', reason => r(JSON.stringify(reason))));
   const spawned = new Promise(r => bot.once('spawn', () => r(null)));
   const kick = await Promise.race([spawned, kicked, sleep(60000).then(() => 'timeout')]);
@@ -187,6 +214,28 @@ async function main() {
   await sleep(1500);
   s = effect(await effects(), 'strength');
   check('8 Strength II potions upgrade to endless Strength II', s && s.amplifier === 1 && s.duration === -1, JSON.stringify(s));
+
+  // From here on the bot acts like a client that has the mod installed.
+  check('vanilla client gets no status packets', statuses.length === 0, JSON.stringify(statuses));
+  check('chat list carries the hidden marker for modded clients', rawMessages.some(m => m.includes('enderbrews:list')), rawMessages.join(' | '));
+  bot._client.write('custom_payload', { channel: 'minecraft:register', data: Buffer.from('enderbrews:status\0enderbrews:pause') });
+  await sleep(2000);
+  let status = statuses[statuses.length - 1];
+  const find = id => status && status.entries.find(e => e.id === `minecraft:${id}`);
+  check('modded client receives a status packet', status && find('strength')?.state === 'ACTIVE' && find('strength').amplifier === 1
+    && find('speed')?.state === 'ACTIVE' && find('poison')?.state === 'BLOCKED', JSON.stringify(status));
+
+  bot._client.write('custom_payload', { channel: 'enderbrews:pause', data: pausePacket('minecraft:speed', true) });
+  await sleep(1500);
+  s = effect(await effects(), 'speed');
+  status = statuses[statuses.length - 1];
+  check('pause packet pauses the effect and the status follows', s === null && find('speed')?.paused === true, JSON.stringify({ s, status }));
+
+  bot._client.write('custom_payload', { channel: 'enderbrews:pause', data: pausePacket(null, false) });
+  await sleep(1500);
+  s = effect(await effects(), 'speed');
+  status = statuses[statuses.length - 1];
+  check('resume-all packet brings everything back', s && s.duration === -1 && find('speed')?.paused === false, JSON.stringify({ s, status }));
 
   bot.quit();
   await sleep(2000);

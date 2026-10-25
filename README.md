@@ -19,6 +19,15 @@ Everything is configurable in `config/enderbrews.toml` (mod) or `plugins/EnderBr
 
 The mod only needs to be on the **server**. Players with a vanilla client can join, and in singleplayer you just install it.
 
+### Extras with the mod on your client
+
+Installing the same jar on the client is optional and adds a few small things. They work on servers running the mod or the plugin:
+
+- The `/enderbrews` list updates **in place** in chat instead of piling up.
+- **Click an endless effect** next to your inventory to pause it. Paused effects show greyed out below the list; click one to resume it.
+- **Potion tooltips** show your progress: `Strength: 5/8 in Ender Chest`, or `∞ Strength: endless`.
+- A key to **pause / resume all** endless effects (unbound by default, set it in Controls → Ender Brews).
+
 ## Commands
 
 | Command | Who | What |

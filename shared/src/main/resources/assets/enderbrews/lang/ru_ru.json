@@ -1,0 +1,12 @@
+{
+    "key.categories.enderbrews": "Ender Brews",
+    "key.enderbrews.pause_all": "Пауза / включение всех вечных эффектов",
+    "enderbrews.tooltip.endless": "∞ %s: вечный",
+    "enderbrews.tooltip.paused": "⏸ %s: вечный, на паузе",
+    "enderbrews.tooltip.progress": "%s: %s/%s в эндер-сундуке",
+    "enderbrews.tooltip.limited": "%s: сверх лимита вечных эффектов",
+    "enderbrews.tooltip.blocked": "%s: здесь не может стать вечным",
+    "enderbrews.effect.paused": "На паузе",
+    "enderbrews.effect.click_pause": "Нажми, чтобы поставить на паузу",
+    "enderbrews.effect.click_resume": "Нажми, чтобы включить"
+}

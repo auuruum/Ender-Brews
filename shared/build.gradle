@@ -2,6 +2,7 @@
 // unit tests can check it; the platforms compile their own relocated copies.
 //   dev.enderbrews.shared.core   - plain Java (rules, config, translations), used everywhere
 //   dev.enderbrews.shared.common - vanilla Minecraft code, used by Fabric, NeoForge and Forge
+//   dev.enderbrews.shared.client - optional client extras, used by Fabric, NeoForge and Forge
 plugins {
     id 'enderbrews-java'
     id 'net.neoforged.moddev'

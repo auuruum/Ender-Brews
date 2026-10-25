@@ -7,7 +7,7 @@ plugins {
     id 'enderbrews-java'
 }
 
-ext.sharedPackages = ext.has('sharedPackages') ? ext.sharedPackages : ['core', 'common']
+ext.sharedPackages = ext.has('sharedPackages') ? ext.sharedPackages : ['core', 'common', 'client']
 
 def sharedProject = project(':shared')
 def platformName = project.name

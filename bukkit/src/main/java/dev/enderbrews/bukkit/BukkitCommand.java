@@ -3,6 +3,7 @@ package dev.enderbrews.bukkit;
 import dev.enderbrews.bukkit.core.EffectStatus;
 import dev.enderbrews.bukkit.core.EnderBrewsConfig;
 import dev.enderbrews.bukkit.core.Lang;
+import dev.enderbrews.bukkit.core.Protocol;
 import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
@@ -81,11 +82,17 @@ final class BukkitCommand implements TabExecutor {
         return List.of();
     }
 
-    /** One chat message; pause/resume send it again so the newest copy shows the current state. */
+    /**
+     * One chat message; pause/resume send it again so the newest copy shows the current state.
+     * Clients with the mod spot the hidden marker and replace the older copy in place.
+     */
     private void list(Player player, String locale) {
         EnderBrewsConfig config = plugin.enderBrewsConfig();
         List<EffectStatus> statuses = plugin.statuses(player);
         TextComponent message = new TextComponent();
+        TextComponent marker = new TextComponent("");
+        marker.setInsertion(Protocol.LIST_MARKER);
+        message.addExtra(marker);
         message.addExtra(format(locale, "list.header", plain(String.valueOf(config.threshold())), ChatColor.LIGHT_PURPLE));
         if (statuses.isEmpty()) {
             message.addExtra("\n");

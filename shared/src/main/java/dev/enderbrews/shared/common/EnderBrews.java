@@ -15,6 +15,7 @@ public final class EnderBrews {
     public static final Logger LOG = LoggerFactory.getLogger("Ender Brews");
 
     private static EnderBrewsServer server;
+    private static ServerNetwork network;
 
     private EnderBrews() {
     }
@@ -24,8 +25,13 @@ public final class EnderBrews {
         return server;
     }
 
+    /** Called once by the loader at startup, so the server can talk to clients that have the mod. */
+    public static void setNetwork(ServerNetwork serverNetwork) {
+        network = serverNetwork;
+    }
+
     public static void serverStarted(MinecraftServer minecraftServer, Path configDir) {
-        server = new EnderBrewsServer(minecraftServer, configDir);
+        server = new EnderBrewsServer(minecraftServer, configDir, network);
     }
 
     public static void serverStopping(MinecraftServer minecraftServer) {
@@ -50,6 +56,13 @@ public final class EnderBrews {
     public static void playerLeft(ServerPlayer player) {
         if (server != null) {
             server.playerLeft(player);
+        }
+    }
+
+    /** A pause packet from a client that has the mod; must be called on the server thread. */
+    public static void pausePacketReceived(ServerPlayer player, byte[] data) {
+        if (server != null) {
+            server.handlePausePacket(player, data);
         }
     }
 
