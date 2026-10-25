@@ -167,13 +167,17 @@ async function main() {
   messages.length = 0;
   bot.chat('/enderbrews');
   await sleep(1000);
-  check('/enderbrews lists effects', messages.some(m => /Ender Brews/.test(m)) && messages.length >= 3, JSON.stringify(messages));
-  console.log('      /enderbrews output:\n        ' + messages.join('\n        '));
+  const list = messages.find(m => /Ender Brews/.test(m)) || '';
+  check('/enderbrews lists effects in one message', list.split('\n').length >= 3, JSON.stringify(messages));
+  console.log('      /enderbrews output:\n        ' + list.split('\n').join('\n        '));
 
+  messages.length = 0;
   bot.chat('/enderbrews pause minecraft:speed');
   await sleep(1500);
   s = effect(await effects(), 'speed');
   check('pausing removes the endless effect', s === null, JSON.stringify(s));
+  const updated = messages.find(m => /Ender Brews/.test(m)) || '';
+  check('pausing sends the list again with the new state', /⏸ Speed/.test(updated) && /\[Resume\]/.test(updated), JSON.stringify(messages));
   bot.chat('/enderbrews resume minecraft:speed');
   await sleep(1500);
   s = effect(await effects(), 'speed');

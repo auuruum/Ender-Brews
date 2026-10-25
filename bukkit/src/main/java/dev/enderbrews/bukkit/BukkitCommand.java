@@ -81,17 +81,21 @@ final class BukkitCommand implements TabExecutor {
         return List.of();
     }
 
+    /** One chat message; pause/resume send it again so the newest copy shows the current state. */
     private void list(Player player, String locale) {
         EnderBrewsConfig config = plugin.enderBrewsConfig();
         List<EffectStatus> statuses = plugin.statuses(player);
-        player.spigot().sendMessage(format(locale, "list.header", plain(String.valueOf(config.threshold())), ChatColor.LIGHT_PURPLE));
+        TextComponent message = new TextComponent();
+        message.addExtra(format(locale, "list.header", plain(String.valueOf(config.threshold())), ChatColor.LIGHT_PURPLE));
         if (statuses.isEmpty()) {
-            player.spigot().sendMessage(format(locale, "list.empty", plain(String.valueOf(config.threshold())), ChatColor.GRAY));
-            return;
+            message.addExtra("\n");
+            message.addExtra(format(locale, "list.empty", plain(String.valueOf(config.threshold())), ChatColor.GRAY));
         }
         for (EffectStatus status : statuses) {
-            player.spigot().sendMessage(line(player, config, status, locale));
+            message.addExtra("\n");
+            message.addExtra(line(player, config, status, locale));
         }
+        player.spigot().sendMessage(message);
     }
 
     private BaseComponent line(Player player, EnderBrewsConfig config, EffectStatus status, String locale) {
@@ -148,8 +152,7 @@ final class BukkitCommand implements TabExecutor {
         }
         boolean paused = pause != null ? pause : !plugin.isPaused(player, effectId);
         plugin.setPaused(player, effectId, paused);
-        player.spigot().sendMessage(format(locale, paused ? "paused" : "resumed", effectName(effectId, 0),
-                paused ? ChatColor.GRAY : ChatColor.GREEN));
+        list(player, locale);
     }
 
     private static BaseComponent effectName(String effectId, int amplifier) {

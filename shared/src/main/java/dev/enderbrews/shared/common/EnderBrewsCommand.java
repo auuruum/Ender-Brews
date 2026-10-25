@@ -69,20 +69,29 @@ final class EnderBrewsCommand {
             player.sendSystemMessage(text(locale, "not.ready").withStyle(ChatFormatting.RED));
             return 0;
         }
+        sendList(player, server, locale);
+        return 1;
+    }
+
+    /**
+     * Sends the whole list as one chat message. Vanilla clients cannot edit a message that was
+     * already sent, so pause/resume send the list again: the newest copy at the bottom of the chat
+     * always shows the current state.
+     */
+    private static void sendList(ServerPlayer player, EnderBrewsServer server, String locale) {
         EnderBrewsConfig config = server.config();
         List<EffectStatus> statuses = server.statuses(player);
-
-        player.sendSystemMessage(format(locale, "list.header", Component.literal(String.valueOf(config.threshold())))
-                .withStyle(ChatFormatting.LIGHT_PURPLE));
+        MutableComponent message = Component.empty()
+                .append(format(locale, "list.header", Component.literal(String.valueOf(config.threshold())))
+                        .withStyle(ChatFormatting.LIGHT_PURPLE));
         if (statuses.isEmpty()) {
-            player.sendSystemMessage(format(locale, "list.empty", Component.literal(String.valueOf(config.threshold())))
+            message.append("\n").append(format(locale, "list.empty", Component.literal(String.valueOf(config.threshold())))
                     .withStyle(ChatFormatting.GRAY));
-            return 1;
         }
         for (EffectStatus status : statuses) {
-            player.sendSystemMessage(line(player, server, status, locale));
+            message.append("\n").append(line(player, server, status, locale));
         }
-        return statuses.size();
+        player.sendSystemMessage(message);
     }
 
     private static Component line(ServerPlayer player, EnderBrewsServer server, EffectStatus status, String locale) {
@@ -142,8 +151,7 @@ final class EnderBrewsCommand {
         }
         boolean paused = pause != null ? pause : !server.isPaused(player, effectId);
         server.setPaused(player, effectId, paused);
-        player.sendSystemMessage(format(locale, paused ? "paused" : "resumed", effectName(effectId, 0))
-                .withStyle(paused ? ChatFormatting.GRAY : ChatFormatting.GREEN));
+        sendList(player, server, locale);
         return 1;
     }
 
