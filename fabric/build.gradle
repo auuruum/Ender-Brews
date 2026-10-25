@@ -25,6 +25,10 @@ loom {
             if (project.hasProperty('quickPlay')) {
                 programArgs('--quickPlayMultiplayer', project.property('quickPlay').toString())
             }
+            // -Pusername=Name picks the dev player name (handy for ops on a test server)
+            if (project.hasProperty('username')) {
+                programArgs('--username', project.property('username').toString())
+            }
         }
         server {
             server()

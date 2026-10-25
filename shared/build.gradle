@@ -14,6 +14,21 @@ neoForge {
         minecraftVersion = parchment_minecraft
         mappingsVersion = parchment_version
     }
+    runs {
+        // A plain vanilla client (no mod loader runs, so Ender Brews is not loaded), for checking
+        // how the server side looks to players without the mod:
+        // ./gradlew :shared:runVanillaClient -PquickPlay=localhost:25566 -Pusername=Vanilla
+        vanillaClient {
+            client()
+            gameDirectory = project.file('runs/vanilla-client')
+            if (project.hasProperty('quickPlay')) {
+                programArguments.addAll('--quickPlayMultiplayer', project.property('quickPlay').toString())
+            }
+            if (project.hasProperty('username')) {
+                programArguments.addAll('--username', project.property('username').toString())
+            }
+        }
+    }
 }
 
 dependencies {
