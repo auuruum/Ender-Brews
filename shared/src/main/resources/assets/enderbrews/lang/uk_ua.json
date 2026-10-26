@@ -1,5 +1,5 @@
 {
-    "key.categories.enderbrews": "Ender Brews",
+    "key.category.enderbrews.main": "Ender Brews",
     "key.enderbrews.pause_all": "Пауза / увімкнення всіх вічних ефектів",
     "enderbrews.tooltip.endless": "∞ %s: вічний",
     "enderbrews.tooltip.paused": "⏸ %s: вічний, на паузі",

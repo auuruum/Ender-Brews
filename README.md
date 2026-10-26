@@ -1,9 +1,11 @@
 # Ender Brews
 
 **Store potions in your Ender Chest — get their effects forever.**
-Terraria-style infinite potions for Minecraft 1.21.1.
+Terraria-style infinite potions for Minecraft 26.3.
 
-One jar for everything: **Fabric · Quilt · NeoForge · Forge** mod and **Paper · Spigot · Purpur** plugin.
+One jar for **Fabric · Quilt · NeoForge · Forge** and the **Paper / Spigot / Purpur** plugin API.
+
+This branch targets **26.3 and Java 25**. The **1.21.1** version is maintained on the `1.21.1` branch; download the jar that matches your Minecraft version. See [validation notes](docs/VALIDATION-26.3.md) for the tested server and client combinations.
 
 ## How it works
 
@@ -38,13 +40,15 @@ Installing the same jar on the client is optional and adds a few small things. T
 
 ## Building
 
-Requires Java 21.
+Requires Java 25.
 
 ```bash
 ./gradlew build
 ```
 
-The universal jar ends up in `build/libs/EnderBrews-<version>+mc1.21.1.jar`.
+The universal jar ends up in `build/libs/EnderBrews-<version>+mc26.3.jar`. This includes the plugin, so this jar requires Java 25 on every platform.
+
+`./gradlew build` also runs the shared rule and protocol tests. For tests with real servers and clients, see [tools/ingame-test/README.md](tools/ingame-test/README.md).
 
 Project layout:
 

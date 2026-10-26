@@ -15,7 +15,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
-import net.minecraft.commands.arguments.ResourceLocationArgument;
+import net.minecraft.commands.arguments.IdentifierArgument;
 import net.minecraft.core.Holder;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
@@ -52,12 +52,12 @@ final class EnderBrewsCommand {
                 .then(Commands.literal("pause").then(effectArgument(true)))
                 .then(Commands.literal("resume").then(effectArgument(false)))
                 .then(Commands.literal("reload")
-                        .requires(source -> source.hasPermission(2))
+                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                         .executes(EnderBrewsCommand::reload)));
     }
 
     private static com.mojang.brigadier.builder.RequiredArgumentBuilder<CommandSourceStack, ?> effectArgument(Boolean pause) {
-        return Commands.argument("effect", ResourceLocationArgument.id())
+        return Commands.argument("effect", IdentifierArgument.id())
                 .suggests(COUNTED_EFFECTS)
                 .executes(ctx -> setPaused(ctx, pause));
     }
@@ -112,10 +112,8 @@ final class EnderBrewsCommand {
                     line.append(" ").append(text(locale, "button." + action)
                             .withStyle(Style.EMPTY
                                     .withColor(paused ? ChatFormatting.GREEN : ChatFormatting.YELLOW)
-                                    .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
-                                            "/enderbrews " + action + " " + status.effectId()))
-                                    .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                                            text(locale, "hover." + action)))));
+                                    .withClickEvent(new ClickEvent.RunCommand("/enderbrews " + action + " " + status.effectId()))
+                                    .withHoverEvent(new HoverEvent.ShowText(text(locale, "hover." + action)))));
                 }
             }
             case PROGRESS -> line.append(Component.literal("· ").withStyle(ChatFormatting.DARK_GRAY))
@@ -146,7 +144,7 @@ final class EnderBrewsCommand {
             player.sendSystemMessage(text(locale, "pause.disabled").withStyle(ChatFormatting.RED));
             return 0;
         }
-        String effectId = ResourceLocationArgument.getId(ctx, "effect").toString();
+        String effectId = IdentifierArgument.getId(ctx, "effect").toString();
         Optional<Holder.Reference<MobEffect>> effect = VanillaEffects.holder(effectId);
         if (effect.isEmpty()) {
             player.sendSystemMessage(format(locale, "effect.unknown", Component.literal(effectId)).withStyle(ChatFormatting.RED));

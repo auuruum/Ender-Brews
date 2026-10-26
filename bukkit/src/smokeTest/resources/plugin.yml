@@ -1,0 +1,7 @@
+name: EnderBrewsSmokeCommands
+version: '1.0'
+main: dev.enderbrews.testing.SmokeCommands
+api-version: '1.21'
+commands:
+  ebsmoke:
+    description: Test-only console bridge for player commands.

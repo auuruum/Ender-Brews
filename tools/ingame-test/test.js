@@ -111,7 +111,7 @@ function clearSlot(i) { send(`item replace entity ${BOT} enderchest.${i} with mi
 async function main() {
   fs.rmSync(path.join(cwd, 'world'), { recursive: true, force: true });
   fs.writeFileSync(path.join(cwd, 'server.properties'),
-    `online-mode=false\nserver-port=${PORT}\nlevel-type=minecraft\\:flat\nspawn-protection=0\ngenerate-structures=false\nspawn-monsters=false\nspawn-animals=false\nmotd=enderbrews-test\n`);
+    `online-mode=false\nwhite-list=false\nenforce-whitelist=false\nserver-ip=127.0.0.1\nserver-port=${PORT}\nlevel-type=minecraft\\:flat\nspawn-protection=0\ngenerate-structures=false\nspawn-monsters=false\nspawn-animals=false\nmotd=enderbrews-test\n`);
   server = spawn(JAVA, ['-Xmx2G', ...SERVERS[platform]], { cwd });
   const log = fs.createWriteStream(path.join(ROOT, `${platform}-run.log`));
   const onData = d => {

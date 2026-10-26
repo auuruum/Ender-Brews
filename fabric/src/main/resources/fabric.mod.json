@@ -30,7 +30,7 @@
         "fabric-message-api-v1": "*",
         "fabric-item-api-v1": "*",
         "fabric-screen-api-v1": "*",
-        "fabric-key-binding-api-v1": "*",
+        "fabric-key-mapping-api-v1": "*",
         "minecraft": "${minecraft_version}",
         "java": ">=${java_version}"
     }

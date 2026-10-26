@@ -54,7 +54,7 @@ final class PotionTooltips {
     }
 
     static String effectId(Holder<MobEffect> effect) {
-        return effect.unwrapKey().map(key -> key.location().toString()).orElse("");
+        return effect.unwrapKey().map(key -> key.identifier().toString()).orElse("");
     }
 
     /** Effect name with its level, written the way the inventory shows it. */

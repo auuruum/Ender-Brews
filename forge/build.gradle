@@ -1,54 +1,32 @@
 plugins {
     id 'enderbrews-platform'
-    id 'net.minecraftforge.gradle' version '[6.0.24,6.2)'
+    id 'net.minecraftforge.gradle'
 }
 
 minecraft {
-    mappings channel: 'official', version: minecraft_version
-
-    copyIdeResources = true
-
-    // Forge 1.20.6+ uses official mappings at runtime, so we must not reobf to SRG
-    reobf = false
-
     runs {
-        client {
-            workingDirectory file('runs/client')
-            ideaModule "${rootProject.name}.${project.name}.main"
-            taskName 'runClient'
+        configureEach {
+            workingDir = layout.projectDirectory.dir('runs/client')
+        }
+        register('client') {
             // ./gradlew :forge:runClient -PquickPlay=localhost:25565 joins that server right away
             if (project.hasProperty('quickPlay')) {
                 args '--quickPlayMultiplayer', project.property('quickPlay').toString()
             }
-            mods {
-                modClientRun {
-                    source sourceSets.main
-                }
-            }
         }
-
-        server {
-            workingDirectory file('runs/server')
-            ideaModule "${rootProject.name}.${project.name}.main"
-            taskName 'runServer'
-            mods {
-                modServerRun {
-                    source sourceSets.main
-                }
-            }
+        register('server') {
+            workingDir = layout.projectDirectory.dir('runs/server')
+            args '--nogui'
         }
     }
 }
 
-dependencies {
-    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
-
-    // Forge's hack fix
-    implementation('net.sf.jopt-simple:jopt-simple:5.0.4') { version { strictly '5.0.4' } }
+repositories {
+    minecraft.mavenizer(it)
+    maven fg.forgeMaven
+    maven fg.minecraftLibsMaven
 }
 
-sourceSets.each {
-    def dir = layout.buildDirectory.dir("sourcesSets/$it.name")
-    it.output.resourcesDir = dir
-    it.java.destinationDirectory = dir
+dependencies {
+    implementation minecraft.dependency("net.minecraftforge:forge:${minecraft_version}-${forge_version}")
 }

@@ -4,7 +4,8 @@ import dev.enderbrews.forge.client.ClientPlatform;
 import dev.enderbrews.forge.client.EnderBrewsClient;
 import java.lang.reflect.Field;
 import java.util.List;
-import net.minecraft.client.GuiMessage;
+import java.util.function.Predicate;
+import net.minecraft.client.multiplayer.chat.GuiMessage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -12,10 +13,12 @@ import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
 import net.minecraftforge.client.event.ScreenEvent;
 import net.minecraftforge.client.event.SystemMessageReceivedEvent;
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
-import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.fml.config.ConfigTracker;
+import net.minecraftforge.fml.config.ModConfig;
+import net.minecraftforge.network.ConnectionType;
+import net.minecraftforge.network.NetworkContext;
 import net.minecraftforge.network.PacketDistributor;
 
 /** Optional client extras on Forge. Only loaded on the physical client. */
@@ -24,10 +27,13 @@ final class EnderBrewsForgeClient {
     private EnderBrewsForgeClient() {
     }
 
-    static void init(IEventBus modBus) {
+    static void init() {
         EnderBrewsClient.init(new ClientPlatform() {
-            // Forge 1.20.6+ runs with Mojang names, so the private field can be found by name.
+            // Minecraft is not obfuscated since 26.1, so private fields can be found by name.
             private final Field allMessages = findField(ChatComponent.class, "allMessages");
+            private final Field leftPos = findField(AbstractContainerScreen.class, "leftPos");
+            private final Field topPos = findField(AbstractContainerScreen.class, "topPos");
+            private final Field imageWidth = findField(AbstractContainerScreen.class, "imageWidth");
 
             @Override
             @SuppressWarnings("unchecked")
@@ -41,17 +47,17 @@ final class EnderBrewsForgeClient {
 
             @Override
             public int guiLeft(AbstractContainerScreen<?> screen) {
-                return screen.getGuiLeft();
+                return readInt(leftPos, screen);
             }
 
             @Override
             public int guiTop(AbstractContainerScreen<?> screen) {
-                return screen.getGuiTop();
+                return readInt(topPos, screen);
             }
 
             @Override
             public int imageWidth(AbstractContainerScreen<?> screen) {
-                return screen.getXSize();
+                return readInt(imageWidth, screen);
             }
 
             @Override
@@ -67,27 +73,36 @@ final class EnderBrewsForgeClient {
         });
         EnderBrewsForge.statusHandler = EnderBrewsClient::statusReceived;
 
-        modBus.addListener((RegisterKeyMappingsEvent event) -> event.register(EnderBrewsClient.PAUSE_ALL_KEY));
-        MinecraftForge.EVENT_BUS.addListener((TickEvent.ClientTickEvent event) -> {
-            if (event.phase == TickEvent.Phase.END) {
-                EnderBrewsClient.clientTick();
+        RegisterKeyMappingsEvent.BUS.addListener(event -> event.register(EnderBrewsClient.PAUSE_ALL_KEY));
+        TickEvent.ClientTickEvent.Post.BUS.addListener(event -> EnderBrewsClient.clientTick());
+        ClientPlayerNetworkEvent.LoggingIn.BUS.addListener(event -> {
+            // Forge 66.1.0 places this vanilla-server setup in the optional code-of-conduct handler.
+            if (NetworkContext.get(event.getConnection()).getType() == ConnectionType.VANILLA
+                    && ConfigTracker.configSets().get(ModConfig.Type.SERVER).stream()
+                    .anyMatch(config -> config.getModId().equals("forge") && config.getConfigData() == null)) {
+                ConfigTracker.loadDefaultServerConfigs();
             }
         });
-        MinecraftForge.EVENT_BUS.addListener((ClientPlayerNetworkEvent.LoggingOut event) -> EnderBrewsClient.disconnected());
-        MinecraftForge.EVENT_BUS.addListener((SystemMessageReceivedEvent event) -> {
-            if (!event.isOverlay()) {
-                EnderBrewsClient.systemMessageReceived(event.getMessage());
-            }
+        ClientPlayerNetworkEvent.LoggingOut.BUS.addListener(event -> EnderBrewsClient.disconnected());
+        SystemMessageReceivedEvent.BUS.addListener((Predicate<SystemMessageReceivedEvent>) event -> {
+            // Forge 26.3 passes the remote-message flag through the old isOverlay accessor.
+            EnderBrewsClient.systemMessageReceived(event.getMessage());
+            return false;
         });
-        MinecraftForge.EVENT_BUS.addListener((ItemTooltipEvent event) ->
-                EnderBrewsClient.appendTooltip(event.getItemStack(), event.getToolTip()));
-        MinecraftForge.EVENT_BUS.addListener((ScreenEvent.Render.Post event) ->
+        ItemTooltipEvent.BUS.addListener(event -> EnderBrewsClient.appendTooltip(event.getItemStack(), event.getToolTip()));
+        ScreenEvent.Render.Post.BUS.addListener(event ->
                 EnderBrewsClient.renderScreen(event.getScreen(), event.getGuiGraphics(), event.getMouseX(), event.getMouseY()));
-        MinecraftForge.EVENT_BUS.addListener((ScreenEvent.MouseButtonPressed.Pre event) -> {
-            if (EnderBrewsClient.mouseClicked(event.getScreen(), event.getMouseX(), event.getMouseY(), event.getButton())) {
-                event.setCanceled(true);
-            }
-        });
+        // Returning true cancels the click so the screen does not handle it too.
+        ScreenEvent.MouseButtonPressed.Pre.BUS.addListener((Predicate<ScreenEvent.MouseButtonPressed.Pre>) event ->
+                EnderBrewsClient.mouseClicked(event.getScreen(), event.getMouseX(), event.getMouseY(), event.getInfo().buttonInfo().button()));
+    }
+
+    private static int readInt(Field field, Object owner) {
+        try {
+            return field.getInt(owner);
+        } catch (IllegalAccessException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     private static Field findField(Class<?> owner, String name) {

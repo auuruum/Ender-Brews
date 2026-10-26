@@ -25,3 +25,15 @@ repositories {
 dependencies {
     compileOnly "org.spigotmc:spigot-api:${spigot_api_version}"
 }
+
+// This helper belongs only on disposable test servers and is excluded from the universal jar.
+sourceSets {
+    smokeTest {
+        compileClasspath += sourceSets.main.compileClasspath
+    }
+}
+
+tasks.register('smokeCommandsJar', Jar) {
+    from sourceSets.smokeTest.output
+    archiveFileName = 'enderbrews-smoke-commands.jar'
+}

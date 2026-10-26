@@ -7,13 +7,13 @@ import java.util.List;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents;
-import net.minecraft.client.GuiMessage;
+import net.minecraft.client.multiplayer.chat.GuiMessage;
 import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 
@@ -58,19 +58,17 @@ public final class EnderBrewsFabricClient implements ClientModInitializer {
                 EnderBrewsClient.statusReceived(payload.data()));
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> EnderBrewsClient.disconnected());
         ClientReceiveMessageEvents.ALLOW_GAME.register((message, overlay) -> {
-            if (!overlay) {
-                EnderBrewsClient.systemMessageReceived(message);
-            }
+            EnderBrewsClient.systemMessageReceived(message);
             return true;
         });
         ItemTooltipCallback.EVENT.register((stack, context, type, lines) -> EnderBrewsClient.appendTooltip(stack, lines));
-        KeyBindingHelper.registerKeyBinding(EnderBrewsClient.PAUSE_ALL_KEY);
+        KeyMappingHelper.registerKeyMapping(EnderBrewsClient.PAUSE_ALL_KEY);
         ClientTickEvents.END_CLIENT_TICK.register(client -> EnderBrewsClient.clientTick());
         ScreenEvents.AFTER_INIT.register((client, screen, width, height) -> {
-            ScreenEvents.afterRender(screen).register((s, graphics, mouseX, mouseY, delta) ->
+            ScreenEvents.afterExtract(screen).register((s, graphics, mouseX, mouseY, delta) ->
                     EnderBrewsClient.renderScreen(s, graphics, mouseX, mouseY));
-            ScreenMouseEvents.allowMouseClick(screen).register((s, mouseX, mouseY, button) ->
-                    !EnderBrewsClient.mouseClicked(s, mouseX, mouseY, button));
+            ScreenMouseEvents.allowMouseClick(screen).register((s, click) ->
+                    !EnderBrewsClient.mouseClicked(s, click.x(), click.y(), click.buttonInfo().button()));
         });
     }
 }

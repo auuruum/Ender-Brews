@@ -7,7 +7,7 @@ import java.util.Map;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.Container;
@@ -34,7 +34,7 @@ final class EnderChestScanner {
                 // their items here. Only one level deep: containers inside containers do not count.
                 ItemContainerContents contents = stack.get(DataComponents.CONTAINER);
                 if (contents != null) {
-                    contents.nonEmptyItems().forEach(inner -> countStack(inner, config, tally));
+                    contents.nonEmptyItemCopyStream().forEach(inner -> countStack(inner, config, tally));
                 }
             }
         }
@@ -71,7 +71,7 @@ final class EnderChestScanner {
         }
         for (String entry : config.extraPotionItems()) {
             if (entry.startsWith("#")) {
-                ResourceLocation tag = ResourceLocation.tryParse(entry.substring(1));
+                Identifier tag = Identifier.tryParse(entry.substring(1));
                 if (tag != null && stack.is(TagKey.create(Registries.ITEM, tag))) {
                     return true;
                 }

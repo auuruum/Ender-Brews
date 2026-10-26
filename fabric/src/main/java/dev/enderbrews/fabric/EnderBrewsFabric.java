@@ -18,8 +18,8 @@ public final class EnderBrewsFabric implements ModInitializer {
 
     @Override
     public void onInitialize() {
-        PayloadTypeRegistry.playS2C().register(EnderBrewsPayloads.Status.TYPE, EnderBrewsPayloads.Status.CODEC);
-        PayloadTypeRegistry.playC2S().register(EnderBrewsPayloads.Pause.TYPE, EnderBrewsPayloads.Pause.CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(EnderBrewsPayloads.Status.TYPE, EnderBrewsPayloads.Status.CODEC);
+        PayloadTypeRegistry.serverboundPlay().register(EnderBrewsPayloads.Pause.TYPE, EnderBrewsPayloads.Pause.CODEC);
         ServerPlayNetworking.registerGlobalReceiver(EnderBrewsPayloads.Pause.TYPE, (payload, context) ->
                 EnderBrews.pausePacketReceived(context.player(), payload.data()));
         EnderBrews.setNetwork(new ServerNetwork() {

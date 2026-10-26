@@ -6,9 +6,10 @@ import dev.enderbrews.shared.core.Protocol;
 import java.util.List;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 
 /**
@@ -24,8 +25,10 @@ import net.minecraft.world.item.ItemStack;
  */
 public final class EnderBrewsClient {
 
+    public static final KeyMapping.Category KEY_CATEGORY = KeyMapping.Category.register(
+            Identifier.fromNamespaceAndPath(Protocol.NAMESPACE, "main"));
     public static final KeyMapping PAUSE_ALL_KEY = new KeyMapping("key.enderbrews.pause_all",
-            InputConstants.Type.KEYSYM, InputConstants.UNKNOWN.getValue(), "key.categories.enderbrews");
+            InputConstants.UNKNOWN.getValue(), KEY_CATEGORY);
 
     private static ClientPlatform platform;
     private static Protocol.Snapshot snapshot;
@@ -81,14 +84,14 @@ public final class EnderBrewsClient {
 
     /** Called before a system chat message is shown. */
     public static void systemMessageReceived(Component message) {
-        ChatListReplacer.beforeShown(Minecraft.getInstance().gui.getChat(), message);
+        ChatListReplacer.beforeShown(Minecraft.getInstance().gui.hud.getChat(), message);
     }
 
     public static void appendTooltip(ItemStack stack, List<Component> lines) {
         PotionTooltips.append(stack, lines);
     }
 
-    public static void renderScreen(Screen screen, GuiGraphics graphics, int mouseX, int mouseY) {
+    public static void renderScreen(Screen screen, GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
         EffectPanel.render(screen, graphics, mouseX, mouseY);
     }
 

@@ -6,7 +6,7 @@ import dev.enderbrews.neoforge.common.EnderBrews;
 import dev.enderbrews.neoforge.common.EnderBrewsPayloads;
 import java.lang.reflect.Field;
 import java.util.List;
-import net.minecraft.client.GuiMessage;
+import net.minecraft.client.multiplayer.chat.GuiMessage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -20,7 +20,7 @@ import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import net.neoforged.neoforge.client.event.ScreenEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
-import net.neoforged.neoforge.network.PacketDistributor;
+import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 
 /** Optional client extras on NeoForge. */
 @Mod(value = EnderBrews.MOD_ID, dist = Dist.CLIENT)
@@ -28,8 +28,11 @@ public final class EnderBrewsNeoForgeClient {
 
     public EnderBrewsNeoForgeClient(IEventBus modBus) {
         EnderBrewsClient.init(new ClientPlatform() {
-            // NeoForge runs with Mojang names, so the private field can be found by name.
+            // Minecraft is not obfuscated since 26.1, so private fields can be found by name.
             private final Field allMessages = findField(ChatComponent.class, "allMessages");
+            private final Field leftPos = findField(AbstractContainerScreen.class, "leftPos");
+            private final Field topPos = findField(AbstractContainerScreen.class, "topPos");
+            private final Field imageWidth = findField(AbstractContainerScreen.class, "imageWidth");
 
             @Override
             @SuppressWarnings("unchecked")
@@ -43,17 +46,17 @@ public final class EnderBrewsNeoForgeClient {
 
             @Override
             public int guiLeft(AbstractContainerScreen<?> screen) {
-                return screen.getGuiLeft();
+                return readInt(leftPos, screen);
             }
 
             @Override
             public int guiTop(AbstractContainerScreen<?> screen) {
-                return screen.getGuiTop();
+                return readInt(topPos, screen);
             }
 
             @Override
             public int imageWidth(AbstractContainerScreen<?> screen) {
-                return screen.getXSize();
+                return readInt(imageWidth, screen);
             }
 
             @Override
@@ -64,7 +67,7 @@ public final class EnderBrewsNeoForgeClient {
 
             @Override
             public void sendPause(byte[] data) {
-                PacketDistributor.sendToServer(new EnderBrewsPayloads.Pause(data));
+                ClientPacketDistributor.sendToServer(new EnderBrewsPayloads.Pause(data));
             }
         });
         EnderBrewsNeoForge.statusHandler = EnderBrewsClient::statusReceived;
@@ -72,11 +75,8 @@ public final class EnderBrewsNeoForgeClient {
         modBus.addListener((RegisterKeyMappingsEvent event) -> event.register(EnderBrewsClient.PAUSE_ALL_KEY));
         NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) -> EnderBrewsClient.clientTick());
         NeoForge.EVENT_BUS.addListener((ClientPlayerNetworkEvent.LoggingOut event) -> EnderBrewsClient.disconnected());
-        NeoForge.EVENT_BUS.addListener((ClientChatReceivedEvent.System event) -> {
-            if (!event.isOverlay()) {
-                EnderBrewsClient.systemMessageReceived(event.getMessage());
-            }
-        });
+        NeoForge.EVENT_BUS.addListener((ClientChatReceivedEvent.System event) ->
+                EnderBrewsClient.systemMessageReceived(event.getMessage()));
         NeoForge.EVENT_BUS.addListener((ItemTooltipEvent event) ->
                 EnderBrewsClient.appendTooltip(event.getItemStack(), event.getToolTip()));
         NeoForge.EVENT_BUS.addListener((ScreenEvent.Render.Post event) ->
@@ -86,6 +86,14 @@ public final class EnderBrewsNeoForgeClient {
                 event.setCanceled(true);
             }
         });
+    }
+
+    private static int readInt(Field field, Object owner) {
+        try {
+            return field.getInt(owner);
+        } catch (IllegalAccessException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     private static Field findField(Class<?> owner, String name) {
