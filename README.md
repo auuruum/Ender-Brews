@@ -19,7 +19,7 @@ Put 8 potions of the same kind in your Ender Chest and that effect becomes endle
   <a href="https://www.curseforge.com/minecraft/mc-mods/ender-brews"><img src="https://raw.githubusercontent.com/intergrav/devins-badges/v3/assets/cozy/available/curseforge_vector.svg" alt="Available on CurseForge" height="64"></a>
 </p>
 
-## How it works
+## 🧪 How it works
 
 - Only the Ender Chest counts (shulker boxes inside it too).
 - Instant effects never become endless. Harmful ones don't either, unless you enable `allow_harmful_effects`.
@@ -27,13 +27,13 @@ Put 8 potions of the same kind in your Ender Chest and that effect becomes endle
 - Milk and totems can't remove endless effects.
 - `/enderbrews` lists your effects. Click one to pause it.
 
-## Install
+## 📥 Install
 
-One jar for Fabric, Quilt, NeoForge, Forge and Paper / Spigot / Purpur. Minecraft 26.1 to 26.3, Java 25. For 1.21.1 see the [`1.21.1` branch](../../tree/1.21.1).
+One jar for every supported mod loader and plugin server. Pick the jar for your Minecraft version from the downloads.
 
 It only has to be on the server. Vanilla clients can join. Installing it on the client as well adds potion tooltips (`Strength: 5/8 in Ender Chest`), live-updating chat list and a pause-all key.
 
-## Config
+## ⚙️ Config
 
 `config/enderbrews.toml` (plugin: `plugins/EnderBrews/enderbrews.toml`). Every option is commented in the file. Reload with `/enderbrews reload` (permission `enderbrews.reload`).
 
