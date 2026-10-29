@@ -1,6 +1,9 @@
 package dev.enderbrews.shared.common;
 
 import dev.enderbrews.shared.core.EffectInfo;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.util.Optional;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -13,6 +16,7 @@ import net.minecraft.world.effect.MobEffectCategory;
 /** Answers effect questions from the vanilla registry. */
 final class VanillaEffects implements EffectInfo {
 
+    private static final MethodHandle IS_INSTANT = isInstantHandle();
     static final VanillaEffects INSTANCE = new VanillaEffects();
 
     private VanillaEffects() {
@@ -39,7 +43,27 @@ final class VanillaEffects implements EffectInfo {
 
     @Override
     public boolean isInstant(String effectId) {
-        return holder(effectId).map(h -> h.value().isInstantaneous()).orElse(false);
+        return holder(effectId).map(h -> {
+            try {
+                return (boolean) IS_INSTANT.invoke(h.value());
+            } catch (Throwable e) {
+                throw new IllegalStateException(e);
+            }
+        }).orElse(false);
+    }
+
+    /** The misspelled isInstantenous was renamed to isInstantaneous in 26.2. */
+    private static MethodHandle isInstantHandle() {
+        MethodType type = MethodType.methodType(boolean.class);
+        try {
+            try {
+                return MethodHandles.publicLookup().findVirtual(MobEffect.class, "isInstantaneous", type);
+            } catch (NoSuchMethodException e) {
+                return MethodHandles.publicLookup().findVirtual(MobEffect.class, "isInstantenous", type);
+            }
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     @Override

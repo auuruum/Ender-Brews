@@ -4,17 +4,21 @@ import com.google.common.collect.Ordering;
 import com.mojang.blaze3d.platform.InputConstants;
 import dev.enderbrews.shared.core.EffectStatus;
 import dev.enderbrews.shared.core.Protocol;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.Hud;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
+import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipPositioner;
 import net.minecraft.client.gui.screens.inventory.tooltip.DefaultTooltipPositioner;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -36,6 +40,8 @@ final class EffectPanel {
     private static final int TEXT_X_OFFSET = 32;
     private static final int SPACING = 7;
     private static final int GREYED = 0x80FFFFFF;
+    private static final MethodHandle TOOLTIP = tooltipHandle();
+    private static final int LEFT_MOUSE_BUTTON = leftMouseButton();
 
     private EffectPanel() {
     }
@@ -94,7 +100,10 @@ final class EffectPanel {
             Component label = Component.translatable("enderbrews.effect.paused");
             int width = Math.min(layout.maxWidth(), TEXT_X_OFFSET + Math.max(font.width(name), font.width(label)) + SPACING);
             graphics.blitSprite(RenderPipelines.GUI_TEXTURED, BACKGROUND, layout.x(), y, width, ROW_HEIGHT, GREYED);
-            graphics.blitSprite(RenderPipelines.GUI_TEXTURED, Hud.getMobEffectSprite(effect), layout.x() + 7, y + 7, 18, 18, GREYED);
+            // Same sprite as vanilla's getMobEffectSprite, which moved from Gui to Hud in 26.2.
+            Identifier sprite = effect.unwrapKey().map(key -> key.identifier().withPrefix("mob_effect/"))
+                    .orElseGet(MissingTextureAtlasSprite::getLocation);
+            graphics.blitSprite(RenderPipelines.GUI_TEXTURED, sprite, layout.x() + 7, y + 7, 18, 18, GREYED);
             if (width > TEXT_X_OFFSET + SPACING) {
                 graphics.text(font, name, layout.x() + TEXT_X_OFFSET, y + 7, 0xFF8F8F8F);
                 graphics.text(font, label, layout.x() + TEXT_X_OFFSET, y + 16, 0xFF6F6F6F);
@@ -119,13 +128,43 @@ final class EffectPanel {
     private static void tooltip(GuiGraphicsExtractor graphics, Font font, List<Component> lines, int mouseX, int mouseY) {
         // Loader post-render hooks run after Screen has already flushed deferred tooltips.
         graphics.nextStratum();
-        graphics.tooltip(font, lines.stream().map(line -> ClientTooltipComponent.create(line.getVisualOrderText())).toList(),
-                mouseX, mouseY, DefaultTooltipPositioner.INSTANCE, null, false);
+        try {
+            TOOLTIP.invoke(graphics, font, lines.stream().map(line -> ClientTooltipComponent.create(line.getVisualOrderText())).toList(),
+                    mouseX, mouseY, (ClientTooltipPositioner) DefaultTooltipPositioner.INSTANCE, (Identifier) null);
+        } catch (Throwable e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    /** 26.3 added a trailing extraSpaceAfterFirstLine flag to tooltip(); 26.1 and 26.2 lack it. */
+    private static MethodHandle tooltipHandle() {
+        MethodType type = MethodType.methodType(void.class, Font.class, List.class, int.class, int.class,
+                ClientTooltipPositioner.class, Identifier.class);
+        MethodHandles.Lookup lookup = MethodHandles.publicLookup();
+        try {
+            try {
+                return MethodHandles.insertArguments(lookup.findVirtual(GuiGraphicsExtractor.class, "tooltip",
+                        type.appendParameterTypes(boolean.class)), 7, false);
+            } catch (NoSuchMethodException e) {
+                return lookup.findVirtual(GuiGraphicsExtractor.class, "tooltip", type);
+            }
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    /** Read at runtime: javac would inline the constant, and it is 0 before 26.3 but 1 since. */
+    private static int leftMouseButton() {
+        try {
+            return InputConstants.class.getField("MOUSE_BUTTON_LEFT").getInt(null);
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     static boolean mouseClicked(Screen screen, double mouseX, double mouseY, int button) {
         Layout layout = layout(screen);
-        if (button != InputConstants.MOUSE_BUTTON_LEFT || layout == null || !EnderBrewsClient.canPause()) {
+        if (button != LEFT_MOUSE_BUTTON || layout == null || !EnderBrewsClient.canPause()) {
             return false;
         }
         int row = layout.rowAt(mouseX, mouseY);

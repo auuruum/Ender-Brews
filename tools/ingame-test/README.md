@@ -20,7 +20,7 @@ pause/resume, stronger endless effects, chat delivery and Ender Brews errors in 
      in `quilt/mods/`.
    - Spigot / Purpur 26.3: put the server jar at `spigot/server.jar` / `purpur/server.jar`.
 3. Accept the Minecraft EULA in each test server's `eula.txt` and copy the **same**
-   `build/libs/EnderBrews-1.0.0+mc26.3.jar` into its `mods/` or `plugins/` directory.
+   `build/libs/EnderBrews-1.0.0+mc26.1-26.3.jar` into its `mods/` or `plugins/` directory.
 4. Run one platform at a time: `node client-smoke.js fabric`, then `quilt`, `neoforge`, `forge`,
    `paper`, `spigot`, `purpur`.
    Repeat with `--vanilla` to verify a client with no mod: `node client-smoke.js fabric --vanilla`.
@@ -55,6 +55,17 @@ The disposable server's saved pause state is reset before each run. Test servers
 Set `EB_CLIENT=forge` (or `fabric`, `neoforge`) to choose a different modded client, for example
 to test Forge → Paper. The default client follows the server loader, using Fabric for Quilt
 and Bukkit-based servers.
+
+### Older 26.x releases
+
+The same jar is tested on 26.1.2 and 26.2 with servers installed under `servers26/<version>/`
+(`EB_SERVERS=servers26/26.2`, plus `NEOFORGE_VERSION` / `FORGE_VERSION`). `EB_GRADLE_ARGS` adds Gradle
+arguments to the client launch, for example the version overrides for a dev or vanilla client:
+`-Pminecraft_version=26.2 -Pneo_form_version=26.2-2 -Pfabric_version=0.161.0+26.2 -Pforge_version=65.1.5
+-Pneoforge_version=26.2.0.93`. To run the finished universal jar itself in a production Fabric client,
+set `EB_CLIENT_TASK=:fabric:runProductionClient` and pass `-PprodMinecraft=26.2 -PprodMods=<fabric-api.jar>`
+(a path without spaces). Fresh client directories show first-launch screens that block quick play;
+set `onboardAccessibility:false` in their `options.txt` first.
 
 For UI inspection, set `EB_INSPECT` to the absolute path of a **nonexistent** file before
 starting the test. After the checks it grants the test player operator permissions and waits

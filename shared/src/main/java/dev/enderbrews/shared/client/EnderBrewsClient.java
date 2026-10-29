@@ -3,10 +3,16 @@ package dev.enderbrews.shared.client;
 import com.mojang.blaze3d.platform.InputConstants;
 import dev.enderbrews.shared.core.EffectStatus;
 import dev.enderbrews.shared.core.Protocol;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
+import java.lang.reflect.Field;
 import java.util.List;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -29,6 +35,8 @@ public final class EnderBrewsClient {
             Identifier.fromNamespaceAndPath(Protocol.NAMESPACE, "main"));
     public static final KeyMapping PAUSE_ALL_KEY = new KeyMapping("key.enderbrews.pause_all",
             InputConstants.UNKNOWN.getValue(), KEY_CATEGORY);
+
+    private static final MethodHandle GET_CHAT = chatHandle();
 
     private static ClientPlatform platform;
     private static Protocol.Snapshot snapshot;
@@ -84,7 +92,30 @@ public final class EnderBrewsClient {
 
     /** Called before a system chat message is shown. */
     public static void systemMessageReceived(Component message) {
-        ChatListReplacer.beforeShown(Minecraft.getInstance().gui.hud.getChat(), message);
+        ChatComponent chat;
+        try {
+            chat = (ChatComponent) GET_CHAT.invoke(Minecraft.getInstance().gui);
+        } catch (Throwable e) {
+            throw new IllegalStateException(e);
+        }
+        ChatListReplacer.beforeShown(chat, message);
+    }
+
+    /** 26.2 moved the chat getter from Gui to the new Gui.hud field (whose Hud class 26.1 lacks). */
+    private static MethodHandle chatHandle() {
+        MethodHandles.Lookup lookup = MethodHandles.publicLookup();
+        MethodType getChat = MethodType.methodType(ChatComponent.class);
+        try {
+            try {
+                return lookup.findVirtual(Gui.class, "getChat", getChat);
+            } catch (NoSuchMethodException e) {
+                Field hud = Gui.class.getField("hud");
+                return MethodHandles.filterReturnValue(lookup.unreflectGetter(hud),
+                        lookup.findVirtual(hud.getType(), "getChat", getChat));
+            }
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     public static void appendTooltip(ItemStack stack, List<Component> lines) {

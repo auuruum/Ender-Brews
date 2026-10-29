@@ -26,7 +26,7 @@ tasks.register('universalJar', Jar) {
     description = 'Builds the single Ender Brews jar for every platform.'
 
     archiveBaseName = 'EnderBrews'
-    archiveVersion = "${version}+mc${minecraft_version}"
+    archiveVersion = "${version}+mc${minecraft_versions_label}"
     destinationDirectory = layout.buildDirectory.dir('libs')
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 

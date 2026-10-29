@@ -1,9 +1,53 @@
-# Minecraft 26.3 validation
+# Minecraft 26.1 – 26.3 validation
 
-Checked on Windows with Java 25 on 2026-10-26. The existing Minecraft 1.21.1 implementation
-remains on the `1.21.1` branch. This port targets 26.3; it does not add 1.20.1 or 1.16.5 support.
+The same jar, built against 26.3, supports every release from 26.1 to 26.3. The existing
+Minecraft 1.21.1 implementation remains on the `1.21.1` branch; 1.20.1 and 1.16.5 are not supported.
 
-## Runtime matrix
+## 26.1 – 26.3 (2026-10-29)
+
+The final `EnderBrews-1.0.0+mc26.1-26.3.jar` passed 17 runs × 15 checks = 255 checks on Windows
+with Java 25. Servers load that exact jar; "production" Fabric clients load it too, through
+Loom's `runProductionClient` with the real game of that version.
+
+| Minecraft | Server | Client | Result |
+| --- | --- | --- | --- |
+| 26.2 | Fabric (Loader 0.19.5) | production Fabric 26.2 with the universal jar | 15/15 |
+| 26.2 | Paper build 135 | production Fabric 26.2 with the universal jar | 15/15 |
+| 26.2 | Paper build 135 | vanilla 26.2 | 15/15 |
+| 26.2 | Fabric | vanilla 26.2 | 15/15 |
+| 26.2 | NeoForge 26.2.0.93 | NeoForge dev client | 15/15 |
+| 26.2 | Forge 65.1.5 | Forge dev client | 15/15 |
+| 26.1.2 | Fabric (Loader **0.18.4**, the declared minimum) | production Fabric 26.1.2 with the universal jar | 15/15 |
+| 26.1.2 | Paper build 74 | production Fabric 26.1.2 with the universal jar | 15/15 |
+| 26.1.2 | Paper build 74 | vanilla 26.1.2 | 15/15 |
+| 26.1.2 | Fabric | vanilla 26.1.2 | 15/15 |
+| 26.1.2 | NeoForge 26.1.2.125 | NeoForge dev client | 15/15 |
+| 26.1.2 | Forge 64.1.5 | Forge dev client | 15/15 |
+| 26.3 | Fabric | Fabric dev client | 15/15 |
+| 26.3 | Forge 66.1.0 | Forge dev client | 15/15 |
+| 26.3 | Paper build 223 | Forge dev client | 15/15 |
+| 26.3 | NeoForge 26.3.0.99 | NeoForge dev client | 15/15 |
+| 26.3 | Paper build 223 | vanilla 26.3 | 15/15 |
+
+The code also compiles against 26.1, 26.1.1, 26.1.2, 26.2 and 26.3 with each version's Fabric API,
+NeoForge and Forge. Differences between those releases are bridged at runtime:
+
+- `GuiGraphicsExtractor.tooltip` gained a trailing `boolean` in 26.3.
+- `InputConstants.MOUSE_BUTTON_LEFT` is `0` before 26.3 and `1` since; javac inlines constants,
+  so it is read reflectively.
+- 26.2 moved the chat getter from `Gui` to the new `Gui.hud` and renamed
+  `MobEffect.isInstantenous` to `isInstantaneous`; the effect sprite is computed directly.
+
+NeoForge 26.2 shows a blocking warning screen for the deprecated `logoFile`; the NeoForge metadata
+uses `iconFile`. Minimum versions follow what 26.1 needs: Fabric Loader 0.18.4 (Fabric API for
+26.1 requires it), Forge 62, NeoForge 26.1. Not run in game: 26.1, 26.1.1 (no Paper builds,
+NeoForge only in beta) and Quilt / Spigot / Purpur on versions before 26.3.
+
+## 26.3 (2026-10-26)
+
+Checked on Windows with Java 25 on 2026-10-26.
+
+### Runtime matrix
 
 Every completed run checks the same 15 scenarios using a dedicated server and a real client.
 The server loads the universal jar from `mods/` or `plugins/`. Modded clients are Gradle dev
@@ -30,7 +74,7 @@ the temporary effect, restoring effects after `/effect clear`, natural expiratio
 effect, shulker contents, excluding poison, pause, resume, chat delivery, upgrading to endless
 Strength II, and absence of Ender Brews errors in client/server logs.
 
-## Build and packaging
+### Build and packaging
 
 - `./gradlew build :bukkit:smokeCommandsJar` succeeds with Java 25.
 - All 19 shared JUnit tests pass: 16 rule/configuration tests and 3 protocol tests.
@@ -42,7 +86,7 @@ Strength II, and absence of Ender Brews errors in client/server logs.
 a real Player sender; `/execute as` supplies a proxy sender to Bukkit and cannot exercise the
 normal player-only command path. Production plugin command behavior was preserved.
 
-## Port fixes
+### Port fixes
 
 - Updated Java/Gradle, loaders, Minecraft APIs, networking names and GUI extraction hooks for
   26.3. The official [Fabric porting notes](https://fabricmc.net/2026/09/15/263.html) describe
@@ -64,7 +108,7 @@ normal player-only command path. Production plugin command behavior was preserve
   config remains unloaded. Forge 66.1.0 places its normal setup in the optional code-of-conduct
   handler; the guarded fallback fixes Forge client → Paper without touching loaded configs.
 
-## Limits
+### Limits
 
 This is Windows validation. Native Quilt clients, Linux/macOS, singleplayer, potion-item tooltip
 appearance and the pause-all key were not manually rechecked on 26.3. Computer Use was stopped

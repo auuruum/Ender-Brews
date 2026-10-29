@@ -25,3 +25,6 @@ runs
 
 # local logs
 *.log
+
+# local release uploads
+release

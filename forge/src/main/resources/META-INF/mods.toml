@@ -17,7 +17,7 @@ displayTest = "IGNORE_ALL_VERSION"
 [[dependencies.${mod_id}]]
 modId = "forge"
 mandatory = true
-versionRange = "[${forge_version},)"
+versionRange = "[${forge_min_version},)"
 ordering = "NONE"
 side = "BOTH"
 

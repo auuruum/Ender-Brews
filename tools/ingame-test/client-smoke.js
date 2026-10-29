@@ -4,7 +4,9 @@
 // Needed for Minecraft versions the mineflayer bot (test.js) does not speak yet.
 // Usage: node client-smoke.js <platform> [--vanilla]; plugin servers and Quilt use the Fabric client.
 // Env: JAVA (server Java), JAVA_HOME (Gradle Java), EB_SERVERS (servers folder),
-//      NEOFORGE_VERSION, FORGE_VERSION (as installed, e.g. 26.3.0.99 and 26.3-66.1.0)
+//      NEOFORGE_VERSION, FORGE_VERSION (as installed, e.g. 26.3.0.99 and 26.3-66.1.0),
+//      EB_GRADLE_ARGS (extra client Gradle args, e.g. -Pminecraft_version=26.2 for older 26.x),
+//      EB_CLIENT_TASK (client Gradle task, e.g. :fabric:runProductionClient)
 const { spawn, execFile } = require('child_process');
 const fs = require('fs');
 const path = require('path');
@@ -135,9 +137,10 @@ async function main() {
   check('server starts with the jar', true);
 
   const gradlew = '"' + path.join(REPO, process.platform === 'win32' ? 'gradlew.bat' : 'gradlew') + '"';
-  const clientTask = vanilla ? ':shared:runVanillaClient' : `:${CLIENT}:runClient`;
+  const clientTask = process.env.EB_CLIENT_TASK || (vanilla ? ':shared:runVanillaClient' : `:${CLIENT}:runClient`);
   const clientArgs = [clientTask, `-PquickPlay=127.0.0.1:${PORT}`, '--console=plain'];
   if (vanilla) clientArgs.push(`-PvanillaGameDir=runs/smoke-${RUN}`);
+  if (process.env.EB_GRADLE_ARGS) clientArgs.push(...process.env.EB_GRADLE_ARGS.split(' '));
   client = spawn(gradlew, clientArgs,
     { cwd: REPO, shell: true, env: { ...process.env, JAVA_HOME: process.env.JAVA_HOME || path.dirname(path.dirname(JAVA)) } });
   const onClientData = d => {
