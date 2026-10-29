@@ -2,7 +2,7 @@
   <iframe width="640" height="360" src="https://www.youtube-nocookie.com/embed/_1pOw55mNeg" title="Ender Brews showcase" frameborder="0" allowfullscreen></iframe>
 </p>
 
-<h3 align="center">Put 8 potions of the same kind in your Ender Chest and that effect becomes endless.<br>Take them out and it's gone.</h3>
+<p align="center"><b>Put 8 potions of the same kind in your Ender Chest and that effect becomes endless.<br>Take them out and it's gone.</b></p>
 
 ## 🧪 How it works
 
