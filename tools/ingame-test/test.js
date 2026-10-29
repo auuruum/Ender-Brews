@@ -1,6 +1,6 @@
 // In-game test of the universal Ender Brews jar on a real server, driven by a vanilla bot.
-// Usage: node test.js <fabric|neoforge|forge|paper>
-// Expects servers/<platform>/ with an installed 1.21.1 server, eula.txt and the jar in mods/ or plugins/
+// Usage: node test.js <fabric|neoforge|forge|paper> [minecraft version, default 1.21.1]
+// Expects servers121/<minecraft>/<platform>/ (see install121.sh) with the jar in mods/ or plugins/
 // (see README.md next to this file). Set JAVA to a Java 21 binary if `java` is not Java 21.
 const { spawn } = require('child_process');
 const fs = require('fs');
@@ -10,15 +10,24 @@ const mineflayer = require('mineflayer');
 const nbt = require('prismarine-nbt');
 
 const JAVA = process.env.JAVA || 'java';
-const ROOT = process.env.EB_SERVERS || path.join(__dirname, 'servers');
+const platform = process.argv[2];
+const MC = process.argv[3] || '1.21.1';
+// Mineflayer has no data for these two, but they share the protocol of the next release.
+const BOT_VERSION = { '1.21.2': '1.21.3', '1.21.7': '1.21.8' }[MC] || MC;
+const ROOT = process.env.EB_SERVERS || path.join(__dirname, 'servers121', MC);
 const PORT = 25599;
 const BOT = 'BrewBot';
-const platform = process.argv[2];
+/** The argument file the NeoForge / Forge installer wrote, whatever loader version it installed. */
+function argsFile(dir) {
+  const base = path.join(ROOT, platform, 'libraries', dir);
+  const version = fs.readdirSync(base)[0];
+  return `@libraries/${dir}/${version}/${process.platform === 'win32' ? 'win' : 'unix'}_args.txt`;
+}
 const SERVERS = {
-  fabric: ['-jar', 'server.jar', 'nogui'],
-  paper: ['-jar', 'paper.jar', 'nogui'],
-  neoforge: ['@libraries/net/neoforged/neoforge/21.1.80/win_args.txt', 'nogui'],
-  forge: ['@libraries/net/minecraftforge/forge/1.21.1-52.0.28/win_args.txt', 'nogui'],
+  fabric: () => ['-jar', 'server.jar', 'nogui'],
+  paper: () => ['-jar', 'paper.jar', 'nogui'],
+  neoforge: () => [argsFile('net/neoforged/neoforge'), 'nogui'],
+  forge: () => [argsFile('net/minecraftforge/forge'), 'nogui'],
 };
 const LOADED = {
   fabric: /enderbrews 1\.0\.0/,
@@ -112,7 +121,7 @@ async function main() {
   fs.rmSync(path.join(cwd, 'world'), { recursive: true, force: true });
   fs.writeFileSync(path.join(cwd, 'server.properties'),
     `online-mode=false\nwhite-list=false\nenforce-whitelist=false\nserver-ip=127.0.0.1\nserver-port=${PORT}\nlevel-type=minecraft\\:flat\nspawn-protection=0\ngenerate-structures=false\nspawn-monsters=false\nspawn-animals=false\nmotd=enderbrews-test\n`);
-  server = spawn(JAVA, ['-Xmx2G', ...SERVERS[platform]], { cwd });
+  server = spawn(JAVA, ['-Xmx2G', ...SERVERS[platform]()], { cwd });
   const log = fs.createWriteStream(path.join(ROOT, `${platform}-run.log`));
   const onData = d => {
     const text = d.toString().replace(/\x1b\[[0-9;]*m/g, '');
@@ -132,7 +141,7 @@ async function main() {
   const messages = [];
   const rawMessages = [];
   const statuses = [];
-  const bot = mineflayer.createBot({ host: '127.0.0.1', port: PORT, username: BOT, version: '1.21.1', auth: 'offline' });
+  const bot = mineflayer.createBot({ host: '127.0.0.1', port: PORT, username: BOT, version: BOT_VERSION, auth: 'offline' });
   bot.on('message', m => { messages.push(m.toString()); rawMessages.push(JSON.stringify(m.json)); });
   bot._client.on('custom_payload', packet => {
     if (packet.channel === 'enderbrews:status') statuses.push(decodeStatus(packet.data));
@@ -258,7 +267,7 @@ async function finish() {
   const errors = output.split('\n').filter(l => /enderbrews/i.test(l) && /(ERROR|Exception|WARN)/.test(l));
   check('no Ender Brews errors or warnings in the log', errors.length === 0, errors.join(' | '));
   const failed = results.filter(r => !r.ok).length;
-  console.log(`\n${platform}: ${results.length - failed}/${results.length} passed`);
+  console.log(`\n${platform} ${MC}: ${results.length - failed}/${results.length} passed`);
   process.exit(failed ? 1 : 0);
 }
 

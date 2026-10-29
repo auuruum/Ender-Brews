@@ -22,6 +22,26 @@ plugins {
 
 rootProject.name = 'Ender Brews'
 
+// -Ptarget=<name> picks versions/<name>.properties (default in gradle.properties). Its values become
+// project properties everywhere; -P on the command line still wins, e.g. to compile against 1.21.2.
+def startProps = gradle.startParameter.projectProperties
+def defaults = new Properties()
+file('gradle.properties').withReader('UTF-8') { defaults.load(it) }
+def targetName = startProps.target ?: defaults.target
+def targetFile = file("versions/${targetName}.properties")
+if (!targetFile.exists()) {
+    throw new GradleException("Unknown target $targetName: there is no $targetFile")
+}
+def targetProps = new Properties()
+targetFile.withReader('UTF-8') { targetProps.load(it) }
+gradle.beforeProject { p ->
+    targetProps.each { k, v ->
+        if (!startProps.containsKey(k)) {
+            p.ext.set(k, v)
+        }
+    }
+}
+
 // Vanilla-only code shared by every platform. Never published on its own:
 // each platform compiles its own relocated copy (see buildSrc/enderbrews-platform.gradle).
 include('shared')

@@ -39,13 +39,26 @@ It only has to be on the server. Vanilla clients can join. Installing it on the 
 
 ## Building
 
-Needs Java 25.
+This branch is the Minecraft 1.21.x line (1.21 – 1.21.11); the 26.x line lives on `port/26.3`. Needs Java 21.
+Each jar covers a range of releases and runs on Fabric, Quilt, NeoForge, Forge and Paper/Spigot:
+
+| Jar | Minecraft |
+| --- | --- |
+| `EnderBrews-<version>+mc1.21-1.21.1.jar` | 1.21, 1.21.1 |
+| `EnderBrews-<version>+mc1.21.2-1.21.4.jar` | 1.21.2, 1.21.3, 1.21.4 |
+| `EnderBrews-<version>+mc1.21.5.jar` | 1.21.5 |
+| `EnderBrews-<version>+mc1.21.6-1.21.8.jar` | 1.21.6, 1.21.7, 1.21.8 |
+| `EnderBrews-<version>+mc1.21.9-1.21.10.jar` | 1.21.9, 1.21.10 |
+| `EnderBrews-<version>+mc1.21.11.jar` | 1.21.11 |
 
 ```bash
-./gradlew build
+./gradlew build -Ptarget=1.21.1
 ```
 
-The jar is in `build/libs/`. Design notes: [docs/DESIGN.md](docs/DESIGN.md). Real-server tests: [tools/ingame-test](tools/ingame-test/README.md).
+builds one jar into `build/libs/` (targets are the files in `versions/`). `./build-all.ps1` builds all of them into
+`build/release/`. Code that differs between releases is picked with `//#if >=1.21.6` lines, see
+[Preprocessor.groovy](buildSrc/src/main/groovy/Preprocessor.groovy).
+Design notes: [docs/DESIGN.md](docs/DESIGN.md). Real-server tests: [tools/ingame-test](tools/ingame-test/README.md).
 
 ## License
 

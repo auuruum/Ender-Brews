@@ -8,7 +8,7 @@ modId = "${mod_id}"
 version = "${version}"
 displayName = "${mod_name}"
 displayURL = "${homepage}"
-iconFile = "assets/enderbrews/icon.png"
+logoFile = "assets/enderbrews/icon.png"
 authors = "${mod_author}"
 description = '''${description}'''
 # Server-side only: players with a vanilla client (or without the mod) can still join.

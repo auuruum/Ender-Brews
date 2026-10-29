@@ -6,10 +6,11 @@ import dev.enderbrews.neoforge.common.EnderBrews;
 import dev.enderbrews.neoforge.common.EnderBrewsPayloads;
 import java.lang.reflect.Field;
 import java.util.List;
-import net.minecraft.client.multiplayer.chat.GuiMessage;
+import net.minecraft.client.GuiMessage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.network.protocol.common.ServerboundCustomPayloadPacket;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
@@ -20,7 +21,6 @@ import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import net.neoforged.neoforge.client.event.ScreenEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
-import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 
 /** Optional client extras on NeoForge. */
 @Mod(value = EnderBrews.MOD_ID, dist = Dist.CLIENT)
@@ -28,7 +28,7 @@ public final class EnderBrewsNeoForgeClient {
 
     public EnderBrewsNeoForgeClient(IEventBus modBus) {
         EnderBrewsClient.init(new ClientPlatform() {
-            // Minecraft is not obfuscated since 26.1, so private fields can be found by name.
+            // NeoForge runs with Mojang names, so private fields can be found by name.
             private final Field allMessages = findField(ChatComponent.class, "allMessages");
             private final Field leftPos = findField(AbstractContainerScreen.class, "leftPos");
             private final Field topPos = findField(AbstractContainerScreen.class, "topPos");
@@ -67,7 +67,8 @@ public final class EnderBrewsNeoForgeClient {
 
             @Override
             public void sendPause(byte[] data) {
-                ClientPacketDistributor.sendToServer(new EnderBrewsPayloads.Pause(data));
+                // Vanilla call: NeoForge's sendToServer moved to ClientPacketDistributor in 21.7.
+                Minecraft.getInstance().getConnection().send(new ServerboundCustomPayloadPacket(new EnderBrewsPayloads.Pause(data)));
             }
         });
         EnderBrewsNeoForge.statusHandler = EnderBrewsClient::statusReceived;
@@ -75,8 +76,11 @@ public final class EnderBrewsNeoForgeClient {
         modBus.addListener((RegisterKeyMappingsEvent event) -> event.register(EnderBrewsClient.PAUSE_ALL_KEY));
         NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) -> EnderBrewsClient.clientTick());
         NeoForge.EVENT_BUS.addListener((ClientPlayerNetworkEvent.LoggingOut event) -> EnderBrewsClient.disconnected());
-        NeoForge.EVENT_BUS.addListener((ClientChatReceivedEvent.System event) ->
-                EnderBrewsClient.systemMessageReceived(event.getMessage()));
+        NeoForge.EVENT_BUS.addListener((ClientChatReceivedEvent.System event) -> {
+            if (!event.isOverlay()) {
+                EnderBrewsClient.systemMessageReceived(event.getMessage());
+            }
+        });
         NeoForge.EVENT_BUS.addListener((ItemTooltipEvent event) ->
                 EnderBrewsClient.appendTooltip(event.getItemStack(), event.getToolTip()));
         NeoForge.EVENT_BUS.addListener((ScreenEvent.Render.Post event) ->

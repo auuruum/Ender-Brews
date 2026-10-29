@@ -1,5 +1,25 @@
 # In-game tests
 
+## Minecraft 1.21.x (this branch)
+
+`test.js` starts a real dedicated server with the jar and drives it with a headless Mineflayer bot
+(no game window). It checks thresholds, stronger potions on top, shulker boxes, harmful effects,
+`/enderbrews` with pause/resume, the status/pause packets a modded client would use and that endless
+effects are not saved.
+
+With Java 21 (`JAVA` pointing to its `java`), from this directory:
+
+1. `npm install`
+2. `./install121.sh <minecraft> fabric paper neoforge forge` installs disposable servers under
+   `servers121/<minecraft>/` (newest Fabric API, Paper build, NeoForge and Forge for that release)
+   and accepts the Minecraft EULA in them.
+3. Build the jars (`./build-all.ps1` in the repository root), then `./run121.sh [minecraft...]` copies
+   the matching jar into each installed server and runs `test.js`. Results are appended to
+   `servers121/results.txt`; one platform: `node test.js fabric 1.21.4`.
+
+The client extras (tooltips, inventory clicks, chat list replacement) are not covered by these
+runs; the client code is only compiled against every release.
+
 ## Minecraft 26.3
 
 `client-smoke.js` starts a dedicated server with the universal jar and joins it with a real dev

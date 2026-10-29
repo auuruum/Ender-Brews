@@ -1,16 +1,17 @@
 plugins {
     id 'enderbrews-platform'
-    id 'net.fabricmc.fabric-loom'
+    id 'net.fabricmc.fabric-loom-remap'
 }
 
 dependencies {
     minecraft "com.mojang:minecraft:${minecraft_version}"
-    implementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
-    implementation "net.fabricmc.fabric-api:fabric-api:${fabric_version}"
+    mappings loom.officialMojangMappings()
+    modImplementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_version}"
 }
 
-// Runs the finished universal jar in a production Fabric client, also on older 26.x releases:
-// ./gradlew :fabric:runProductionClient -PprodMinecraft=26.2 -PprodMods=<fabric-api.jar> -PquickPlay=localhost:25565
+// Runs the finished universal jar in a production Fabric client, also on other releases of the target:
+// ./gradlew :fabric:runProductionClient -PprodMinecraft=1.21 -PprodMods=<fabric-api.jar> -PquickPlay=localhost:25565
 tasks.register('runProductionClient', net.fabricmc.loom.task.prod.ClientProductionRunTask) {
     minecraftVersion = providers.gradleProperty('prodMinecraft').orElse(minecraft_version)
     mods.from(rootProject.layout.buildDirectory.file("libs/EnderBrews-${version}+mc${minecraft_versions_label}.jar"))

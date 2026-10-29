@@ -28,5 +28,6 @@ repositories {
 }
 
 dependencies {
-    implementation minecraft.dependency("net.minecraftforge:forge:${minecraft_version}-${forge_version}")
+    // forge_minecraft_version only exists for compile checks against releases without Forge (1.21.2).
+    implementation minecraft.dependency("net.minecraftforge:forge:${findProperty('forge_minecraft_version') ?: minecraft_version}-${forge_version}")
 }

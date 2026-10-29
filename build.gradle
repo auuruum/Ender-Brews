@@ -1,6 +1,6 @@
 plugins {
     // see https://fabricmc.net/develop/ for new versions
-    id 'net.fabricmc.fabric-loom' version '1.19.3' apply false
+    id 'net.fabricmc.fabric-loom-remap' version '1.19.3' apply false
     // see https://projects.neoforged.net/neoforged/moddevgradle for new versions
     id 'net.neoforged.moddev' version '2.0.148' apply false
     // see https://files.minecraftforge.net for new versions
@@ -13,9 +13,10 @@ evaluationDependsOnChildren()
 // and a Bukkit/Spigot/Paper plugin. Each loader only reads its own metadata file
 // (fabric.mod.json, META-INF/neoforge.mods.toml, META-INF/mods.toml, plugin.yml)
 // and only ever loads classes from its own dev.enderbrews.<platform> package.
-// Since 26.1 Minecraft is no longer obfuscated, so every loader runs on Mojang names.
+// Minecraft 1.21.x is obfuscated: the Fabric jar is remapped to intermediary names, while
+// NeoForge and Forge run on Mojang names. Each target in versions/ builds its own jar.
 def platformJars = [
-        ':fabric'  : 'jar',
+        ':fabric'  : 'remapJar',
         ':neoforge': 'jar',
         ':forge'   : 'jar',
         ':bukkit'  : 'jar',
@@ -57,3 +58,4 @@ tasks.register('build') {
     group = 'build'
     dependsOn('universalJar')
 }
+

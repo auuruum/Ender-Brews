@@ -1,4 +1,5 @@
 {
+    "key.categories.enderbrews": "Ender Brews",
     "key.category.enderbrews.main": "Ender Brews",
     "key.enderbrews.pause_all": "Pause / resume all endless effects",
     "enderbrews.tooltip.endless": "∞ %s: endless",

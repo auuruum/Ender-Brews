@@ -6,8 +6,11 @@ import dev.enderbrews.forge.core.Protocol;
 import io.netty.buffer.Unpooled;
 import java.util.function.Consumer;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+//#if <1.21.6
+import net.minecraftforge.common.MinecraftForge;
+//#endif
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
@@ -15,6 +18,7 @@ import net.minecraftforge.event.network.CustomPayloadEvent;
 import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.event.server.ServerStoppingEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLEnvironment;
 import net.minecraftforge.fml.loading.FMLPaths;
 import net.minecraftforge.network.ChannelBuilder;
@@ -26,16 +30,22 @@ import net.minecraftforge.network.PacketDistributor;
 public final class EnderBrewsForge {
 
     // Optional: players and servers without Ender Brews can still connect.
-    static final EventNetworkChannel STATUS = ChannelBuilder.named(Identifier.parse(Protocol.STATUS_CHANNEL))
+    static final EventNetworkChannel STATUS = ChannelBuilder.named(ResourceLocation.parse(Protocol.STATUS_CHANNEL))
             .optional().eventNetworkChannel();
-    static final EventNetworkChannel PAUSE = ChannelBuilder.named(Identifier.parse(Protocol.PAUSE_CHANNEL))
+    static final EventNetworkChannel PAUSE = ChannelBuilder.named(ResourceLocation.parse(Protocol.PAUSE_CHANNEL))
             .optional().eventNetworkChannel();
 
     /** Set by {@link EnderBrewsForgeClient}; stays a no-op on dedicated servers. */
     static Consumer<byte[]> statusHandler = data -> {
     };
 
+    //#if >=1.21.6
+    public EnderBrewsForge(FMLJavaModLoadingContext context) {
+    //#else
+    // Forge 51 (Minecraft 1.21) cannot pass the context to the constructor yet.
     public EnderBrewsForge() {
+        FMLJavaModLoadingContext context = FMLJavaModLoadingContext.get();
+    //#endif
         PAUSE.addListener((CustomPayloadEvent event) -> {
             ServerPlayer sender = event.getSource().getSender();
             if (sender != null && event.getPayload() != null) {
@@ -63,9 +73,15 @@ public final class EnderBrewsForge {
             }
         });
 
+        //#if >=1.21.6
+        // Forge 56 (Minecraft 1.21.6) moved to EventBus 7: every event has its own bus.
         ServerStartedEvent.BUS.addListener(event -> EnderBrews.serverStarted(event.getServer(), FMLPaths.CONFIGDIR.get()));
         ServerStoppingEvent.BUS.addListener(event -> EnderBrews.serverStopping(event.getServer()));
+        //#if >=1.21.9
         TickEvent.ServerTickEvent.Post.BUS.addListener(event -> EnderBrews.serverTick(event.server()));
+        //#else
+        TickEvent.ServerTickEvent.Post.BUS.addListener(event -> EnderBrews.serverTick(event.getServer()));
+        //#endif
         PlayerEvent.PlayerLoggedInEvent.BUS.addListener(event -> {
             if (event.getEntity() instanceof ServerPlayer player) {
                 EnderBrews.playerJoined(player);
@@ -79,8 +95,33 @@ public final class EnderBrewsForge {
         RegisterCommandsEvent.BUS.addListener(event -> EnderBrews.registerCommands(event.getDispatcher()));
 
         if (FMLEnvironment.dist.isClient()) {
-            EnderBrewsForgeClient.init();
+            EnderBrewsForgeClient.init(context.getModBusGroup());
         }
+        //#else
+        MinecraftForge.EVENT_BUS.addListener((ServerStartedEvent event) ->
+                EnderBrews.serverStarted(event.getServer(), FMLPaths.CONFIGDIR.get()));
+        MinecraftForge.EVENT_BUS.addListener((ServerStoppingEvent event) -> EnderBrews.serverStopping(event.getServer()));
+        MinecraftForge.EVENT_BUS.addListener((TickEvent.ServerTickEvent event) -> {
+            if (event.phase == TickEvent.Phase.END) {
+                EnderBrews.serverTick(event.getServer());
+            }
+        });
+        MinecraftForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedInEvent event) -> {
+            if (event.getEntity() instanceof ServerPlayer player) {
+                EnderBrews.playerJoined(player);
+            }
+        });
+        MinecraftForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent event) -> {
+            if (event.getEntity() instanceof ServerPlayer player) {
+                EnderBrews.playerLeft(player);
+            }
+        });
+        MinecraftForge.EVENT_BUS.addListener((RegisterCommandsEvent event) -> EnderBrews.registerCommands(event.getDispatcher()));
+
+        if (FMLEnvironment.dist.isClient()) {
+            EnderBrewsForgeClient.init(context.getModEventBus());
+        }
+        //#endif
     }
 
     static FriendlyByteBuf buffer(byte[] data) {

@@ -16,9 +16,14 @@ def generateShared = tasks.register('generateSharedSources', Sync) {
     }
     into(layout.buildDirectory.dir('generated/sharedSources'))
     includeEmptyDirs = false
-    eachFile { it.path = it.path.replace('dev/enderbrews/shared/', "dev/enderbrews/${platformName}/") }
-    filter { String line -> line.replace('dev.enderbrews.shared.', "dev.enderbrews.${platformName}.") }
+    def mcVersion = minecraft_version
+    eachFile { details ->
+        details.path = details.path.replace('dev/enderbrews/shared/', "dev/enderbrews/${platformName}/")
+        def preprocessor = new Preprocessor(mcVersion)
+        details.filter { String line -> preprocessor.line(line).replace('dev.enderbrews.shared.', "dev.enderbrews.${platformName}.") }
+    }
     inputs.property('sharedPackages', project.ext.sharedPackages)
+    inputs.property('minecraft_version', mcVersion)
 }
 
 sourceSets.main.java.srcDir(generateShared)
