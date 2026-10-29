@@ -1,287 +1,162 @@
-# Ender Brews — дизайн мода
+# Ender Brews: design
 
-> Положи достаточно одинаковых зелий в эндер-сундук — получи их эффект навсегда.
-> Вдохновлено Fargo's Mutant Mod (Terraria): 30 зелий в копилке = вечный баф.
+> Keep enough potions of the same kind in your Ender Chest and you get their effect forever.
+> Inspired by Fargo's Mutant Mod (Terraria): 30 potions in the piggy bank = a permanent buff.
 
-## 1. Главное правило
+## 1. The main rule
 
-- Источник **только эндер-сундук** игрока.
-  - Зелья, лежащие прямо в слотах эндер-сундука, считаются.
-  - Зелья внутри **шалкеров, которые лежат в эндер-сундуке**, тоже считаются.
-  - Инвентарь игрока, обычные сундуки, сумки и бандлы **не считаются**.
-- Зелья **не пьются**. Эффект пассивный: пока зелья лежат в эндер-сундуке, эффект висит; убрал — эффект пропал.
-- Порог: **8 зелий** одного эффекта и уровня по умолчанию. В конфиге — любое число (1, 16, 32, 64…). Ниже порога — ничего, никаких частичных бонусов.
-- **Всё в моде настраивается через конфиг** (раздел 7).
-- Размер стака зелий **не меняем** (остаётся 1). Поэтому шалкеры — основной способ хранения: один шалкер = 27 зелий.
+- The source is **only the player's Ender Chest**.
+  - Potions lying directly in the Ender Chest slots count.
+  - Potions inside **shulker boxes that sit in the Ender Chest** count too.
+  - The player inventory, normal chests, backpacks and bundles do **not** count.
+- Potions are **not drunk**. The effect is passive: while the potions are in the Ender Chest the effect is active, take them out and it's gone.
+- Threshold: **8 potions** of one effect and level by default. Any number in the config (1, 16, 32, 64…). Below the threshold nothing happens, no partial bonuses.
+- **Everything is configurable** (section 7).
+- The potion stack size is **not changed** (stays 1), so shulker boxes are the main way to store them: one shulker = 27 potions.
 
-### Почему не меняем стак
-- Мод может работать **только на сервере**, игрокам с ванильным клиентом ничего ставить не надо. Иконка вечного эффекта с «∞» уже есть в ванилле.
-- Нет конфликтов с другими модами, которые меняют стаки, и с варочной стойкой.
+### Why the stack size is not changed
+- The mod can run **server-side only**, players with a vanilla client install nothing. The vanilla effect icon with "∞" is already in the game.
+- No conflicts with other mods that change stack sizes, or with the brewing stand.
 
-## 2. Как считаются зелья
+## 2. How potions are counted
 
-1. Обходим 27 слотов эндер-сундука. Шалкер — заглядываем внутрь (1 уровень, шалкер в шалкер ваниль не пускает).
-2. Каждое зелье даёт +1 к счётчику каждого своего эффекта с его уровнем.
-   - Обычная и длинная версия (Сила 3:00 и 8:00) — **один счётчик**, длительность не важна.
-   - Сила I и Сила II — **разные счётчики**.
-   - **Более сильное зелье засчитывается и в более слабые уровни** (зелье Силы II = +1 к Силе II и +1 к Силе I). Итог при пороге 8: 4× Сила II + 4× Сила I → вечная Сила I.
-3. Из всех уровней одного эффекта, прошедших порог, выдаётся **самый высокий**.
-4. Считаются только **обычные (питьевые) зелья**. Взрывные, оседающие, стрелы с эффектом — нет: люди хранят их в эндер-сундуке как оружие. (Опция в конфиге.)
-5. Зелья других модов работают автоматически: читаем эффекты из самого предмета.
+1. Walk the 27 slots of the Ender Chest. For a shulker box, look inside (one level, vanilla does not allow a shulker inside a shulker).
+2. Every potion adds +1 to the counter of each of its effects, per level.
+   - Normal and extended versions (Strength 3:00 and 8:00) share **one counter**, duration doesn't matter.
+   - Strength I and Strength II are **separate counters**.
+   - **A stronger potion also counts for the weaker levels** (a Strength II potion is +1 Strength II and +1 Strength I). With threshold 8: 4× Strength II + 4× Strength I = endless Strength I.
+3. Of all levels of one effect that reach the threshold, the **highest** is applied.
+4. Only **regular (drinkable) potions** count. Splash, lingering and tipped arrows don't: people keep those in the Ender Chest as weapons. (Config option.)
+5. Potions from other mods work automatically: effects are read from the item itself.
 
-## 3. Какие эффекты могут стать вечными
+## 3. Which effects can become endless
 
-| Эффект | Вечный? | Почему |
+| Effect | Endless? | Why |
 |---|---|---|
-| Полезные с длительностью: скорость, сила, прыгучесть, регенерация, огнестойкость, подводное дыхание, ночное зрение, невидимость, медленное падение, удача, сопротивление | Да | Ради этого мод |
-| Мгновенные: исцеление, вред | Нет | У них нет длительности; вечное исцеление = бессмертие |
-| Вредные: яд, слабость, замедление | Нет (опция) | Люди хранят зелья слабости для лечения зомби-жителей — нельзя внезапно получить вечную слабость |
-| Зелья 1.21 с побочкой: заражение (чешуйницы), слизистость, плетение, ветряной заряд | Нет | Вечные чешуйницы из игрока при каждом ударе |
-| Черепаший мастер (замедление IV + сопротивление III) | Только сопротивление III | Вредная часть зелья отбрасывается, полезная работает |
-| Вода, неловкое, мутное, густое | Не считаются | Нет эффектов |
+| Beneficial effects with a duration: speed, strength, jump boost, regeneration, fire resistance, water breathing, night vision, invisibility, slow falling, luck, resistance | Yes | The point of the mod |
+| Instant: healing, harming | No | No duration; endless healing would be immortality |
+| Harmful: poison, weakness, slowness | No (option) | People keep weakness potions to cure zombie villagers, you must not suddenly get endless weakness |
+| 1.21 potions with side effects: infested, oozing, weaving, wind charged | No | Endless silverfish out of the player on every hit |
+| Turtle Master (slowness IV + resistance III) | Only resistance III | The harmful part is dropped, the beneficial part works |
+| Water, awkward, mundane, thick | Not counted | No effects |
 
-Серверный конфиг: чёрный список эффектов (например, запретить невидимость на PvP-сервере).
+The server config has a blacklist of effects (for example, ban invisibility on a PvP server).
 
-## 4. Как выдаётся эффект
+## 4. How the effect is applied
 
-- Длительность **бесконечная** → иконка с «∞», никакого мигания ночного зрения.
-- **Без частиц** (иначе игрок вечно в пузырьках, а невидимость выдаёт себя). Иконка в HUD остаётся.
-- Мод запоминает у игрока, **какие эффекты выдал он сам**, и убирает только их. Чужие эффекты (от зелий, маяка, команд, других модов) не трогает никогда.
-- Проверка раз в секунду + сразу при закрытии эндер-сундука, при входе, респавне и смене измерения. Нагрузка ничтожная: максимум 27 + 27×27 = 756 предметов на игрока в секунду.
+- The duration is **infinite**: the icon shows "∞", no night vision flicker.
+- **No particles** (otherwise the player is always bubbling and invisibility gives itself away). The HUD icon stays.
+- The mod remembers **which effects it gave** the player and removes only those. Other effects (from potions, beacons, commands, other mods) are never touched.
+- Checked once per second, and right away when the Ender Chest is closed, on join, respawn and dimension change. The load is tiny: at most 27 + 27×27 = 756 items per player per second.
 
-## 5. Граничные случаи
+## 5. Edge cases
 
-### Взаимодействие с другими эффектами того же типа
-| Ситуация | Что происходит |
+### Interaction with other effects of the same type
+| Situation | What happens |
 |---|---|
-| Вечная Сила I, игрок **выпил Силу II** (3:00) | 3 минуты действует Сила II. Когда она закончится — **вечная Сила I возвращается сама**. Ничего не пропадает |
-| Вечная Сила I, игрок выпил **Силу I** | Зелье ничего не даёт (вечный эффект и так сильнее по длительности). Ванильное поведение, как пить второе такое же зелье |
-| Вечная Сила II, выпил Силу I | Ничего не меняется, Сила II остаётся |
-| Вечная Сила I, Сила II от зелья, и **в этот момент игрок убирает зелья Силы I из сундука** | Сила II дотикивает свои минуты, после неё вечная Сила I **не возвращается**. Важная ловушка: ваниль прячет слабый эффект «под» сильным и восстанавливает его после — мод должен вычистить скрытую вечную копию |
-| Вечная Сила I + **маяк** с Силой II | Работает Сила II от маяка; отошёл от маяка → вечная Сила I |
-| Вечная Сила II + маяк с Силой I | Маяк ничего не добавляет |
-| В сундуке появилось 16 Силы II, пока у игрока вечная Сила I | Вечная Сила I заменяется на вечную Силу II |
-| Количество упало ниже порога (вынул 1 зелье из 8) | Эффект снимается сразу, без задержки и «буфера» |
+| Endless Strength I, the player **drinks Strength II** (3:00) | Strength II is active for 3 minutes. When it ends, **endless Strength I comes back by itself**. Nothing is lost |
+| Endless Strength I, the player drinks **Strength I** | The potion does nothing (the endless effect already outlasts it). Vanilla behavior, like drinking a second identical potion |
+| Endless Strength II, drinks Strength I | Nothing changes, Strength II stays |
+| Endless Strength I, Strength II from a potion, and **the player takes the Strength I potions out of the chest at that moment** | Strength II runs out, then endless Strength I **does not come back**. An important trap: vanilla hides the weaker effect "under" the stronger one and restores it afterwards, so the mod has to clear the hidden endless copy |
+| Endless Strength I + a **beacon** with Strength II | The beacon's Strength II is active; walk away from the beacon and endless Strength I is back |
+| Endless Strength II + a beacon with Strength I | The beacon adds nothing |
+| 16 Strength II appear in the chest while the player has endless Strength I | Endless Strength I is replaced by endless Strength II |
+| The count drops below the threshold (took 1 potion out of 8) | The effect is removed right away, no delay or "buffer" |
 
-### Очистка эффектов
-| Ситуация | Что происходит |
+### Clearing effects
+| Situation | What happens |
 |---|---|
-| **Молоко** | Снимает все эффекты (яд, дурное знамение и т.д.), а вечные мод возвращает уже на следующем тике (1/20 секунды) — на глаз не заметно. Молоко остаётся полезным |
-| **Тотем бессмертия** | Ваниль сбрасывает все эффекты, вечные возвращаются на следующем тике, тотем добавляет свои (регенерация, поглощение, огнестойкость) как обычно |
-| Мёд | Снимает только яд, как в ванилле |
-| Команда `/effect clear` от админа | Снимает всё, вечные возвращаются через секунду (админ может выключить мод для игрока или эффект в конфиге) |
-| Вредный эффект от врага (ведьма, иссушение) | Работает как обычно, вечные эффекты ему не мешают |
+| **Milk** | Removes all effects (poison, bad omen, etc.); the mod restores the endless ones on the very next tick (1/20 s), not noticeable. Milk stays useful |
+| **Totem of Undying** | Vanilla clears all effects, endless ones return on the next tick, the totem adds its own (regeneration, absorption, fire resistance) as usual |
+| Honey | Removes only poison, as in vanilla |
+| `/effect clear` by an admin | Removes everything, endless effects return within a second (an admin can disable the mod for a player or an effect in the config) |
+| A harmful effect from an enemy (witch, wither) | Works as usual, endless effects don't interfere |
 
-### Жизненный цикл игрока
-| Ситуация | Что происходит |
+### Player lifecycle
+| Situation | What happens |
 |---|---|
-| Смерть и респавн | Эндер-сундук не теряется → эффекты выдаются **сразу при респавне** |
-| Смена измерения (Ад, Край, выход из Края) | Эффекты переносятся, проверка сразу после перехода |
-| Выход с сервера | Вечные эффекты **снимаются при выходе** и выдаются заново при входе. Иначе после удаления мода у игроков навсегда осталась бы Сила |
-| Краш сервера (эффекты успели сохраниться) | При входе мод пересчитывает всё и убирает лишнее |
-| Удаление мода | Безопасно: после следующего входа эффектов не будет (кроме случая краш + удаление сразу) |
-| Креатив | Работает как обычно |
-| Наблюдатель | Не выдаём (эффекты наблюдателю бессмысленны) |
+| Death and respawn | The Ender Chest isn't lost, so effects are given **right on respawn** |
+| Dimension change (Nether, End, leaving the End) | Effects carry over, checked right after the transfer |
+| Leaving the server | Endless effects are **removed on logout** and given again on join. Otherwise players would keep Strength forever after the mod is removed |
+| Server crash (effects had been saved) | On join the mod recounts everything and removes the extras |
+| Removing the mod | Safe: after the next join the effects are gone (except crash + removal right away) |
+| Creative | Works as usual |
+| Spectator | Not given (effects are pointless for spectators) |
 
-### Содержимое эндер-сундука
-| Ситуация | Что происходит |
+### Ender Chest contents
+| Situation | What happens |
 |---|---|
-| Игрок открыл эндер-сундук и перекладывает зелья | Счётчик обновляется раз в секунду, финально — при закрытии |
-| Шалкер с зельями вынули из эндер-сундука | Зелья из него больше не считаются |
-| Зелья в бандле внутри эндер-сундука | Не считаются (в бандл влезает 1 зелье, смысла нет) |
-| Шалкер в шалкере / сумка из другого мода | Не считается в v1 |
-| Зелья с переименованием (наковальня) | Считаются по эффектам, имя не важно |
-| Зелья, созданные командой с нестандартными эффектами | Считаются по эффектам, применяются те же правила |
-| Зелье с несколькими эффектами | +1 к каждому своему эффекту |
-| Эндер-сундук меняют другие моды (портативный эндер-сундук, воронки с модов) | Работает, т.к. мод читает само содержимое, а не следит за открытием |
-| Каждый игрок | Свой эндер-сундук — свои вечные эффекты, друг на друга не влияют |
+| The player has the Ender Chest open and moves potions around | The counter updates once per second, finally on close |
+| A shulker box with potions is taken out of the Ender Chest | Its potions no longer count |
+| Potions in a bundle inside the Ender Chest | Not counted (a bundle holds 1 potion, no point) |
+| Shulker in a shulker / a bag from another mod | Not counted |
+| Renamed potions (anvil) | Counted by effects, the name doesn't matter |
+| Potions made by command with custom effects | Counted by effects, same rules |
+| A potion with several effects | +1 to each of its effects |
+| Other mods change the Ender Chest (portable Ender Chest, hoppers from mods) | Works, the mod reads the contents and doesn't watch for opening |
+| Every player | Own Ender Chest, own endless effects, no influence on each other |
 
-### Баланс
-- Цена при пороге 8: ≈ 3 варки (по 3 бутылки за раз). Дёшево — для хардкорных серверов админ ставит 16/32/64.
-- Самые сильные кандидаты — Регенерация II и Сила II. Админ может поднять порог или запретить эффект.
-- Нет дюпа: мод ничего не создаёт и не тратит, только читает.
+### Balance
+- At threshold 8 the price is about 3 brews (3 bottles each). Cheap, so on hardcore servers an admin sets 16/32/64.
+- The strongest candidates are Regeneration II and Strength II. An admin can raise the threshold or ban the effect.
+- No duplication: the mod creates and spends nothing, it only reads.
 
-## 6. Выключение эффектов (пауза)
+## 6. Pausing effects
 
-Зачем: вечная невидимость мешает играть с друзьями, медленное падение — строить, ночное зрение — смотреть на закат. Вынимать зелья из сундука ради этого неудобно.
+Why: endless invisibility gets in the way when playing with friends, slow falling when building, night vision when looking at a sunset. Taking the potions out of the chest for that is annoying.
 
-### Три способа — от удобного к запасному
-1. **Клик по иконке эффекта в инвентаре** (если мод стоит на клиенте). В ванильном инвентаре справа и так есть список эффектов. Клик по вечному эффекту → он ставится на паузу: иконка тускнеет, вместо «∞» — «⏸». Клик ещё раз → снова работает. Ничего нового учить не надо.
-2. **Клавиша «пауза всех вечных эффектов»** (по умолчанию не назначена, ставится в настройках управления). Одно нажатие — всё выкл / всё вкл.
-3. **Команда в чате** — работает даже у игроков без мода на клиенте. `/enderbrews` выводит список:
+### Three ways, from the most convenient to the fallback
+1. **Click the effect icon in the inventory** (when the mod is on the client). The vanilla inventory already shows the effect list on the right. Click an endless effect to pause it: the icon dims and shows "⏸" instead of "∞". Click again to resume. Nothing new to learn.
+2. **A "pause all endless effects" key** (unbound by default, set it in Controls). One press turns everything off / on.
+3. **A chat command**, works even for players without the mod on the client. `/enderbrews` prints a list:
    ```
-   Сила II       ∞  [Выкл]
-   Невидимость   ⏸  [Вкл]
-   Скорость      5/8 зелий
+   Strength II    ∞  [Off]
+   Invisibility   ⏸  [On]
+   Speed          5/8 potions
    ```
-   `[Вкл]`/`[Выкл]` — кликабельные кнопки прямо в чате (ваниль это умеет), набирать команду руками не нужно.
+   `[On]` / `[Off]` are clickable buttons right in chat (vanilla can do this), no need to type the command.
 
-### Правила паузы
-- Пауза **сохраняется**: переживает смерть, выход с сервера, смену измерения.
-- Зелья на паузе **продолжают считаться**, эффект просто не выдаётся.
-- Вынул зелья и положил обратно → пауза остаётся (игрок сам её поставил). Сброс только руками.
-- Пауза снимает только вечный эффект мода. Если в этот момент действует такой же эффект от выпитого зелья — он дотикивает как обычно.
-- Админ может запретить паузу в конфиге (`allowPause`).
+### Pause rules
+- A pause is **saved**: it survives death, logging out and dimension changes.
+- Paused potions **still count**, the effect just isn't given.
+- Take the potions out and put them back and the pause stays (the player set it). It is reset only by hand.
+- A pause removes only the mod's endless effect. If the same effect from a drunk potion is active at that moment, it runs out as usual.
+- An admin can disable pausing in the config (`allow_pause`).
 
-## 6.1 Клиентская часть (опционально)
+## 6.1 Client side (optional)
 
-Мод полностью работает только на сервере. Тот же jar на клиенте добавляет мелкие удобства — и на сервере с модом, и на сервере с плагином:
+The mod fully works on the server alone. The same jar on the client adds small conveniences, both on a server with the mod and on a server with the plugin:
 
-- **Список `/enderbrews` обновляется на месте.** Сервер помечает список скрытой меткой, клиент с модом удаляет старую копию, когда приходит новая. У игроков без мода новый список просто появляется ниже.
-- **Клик по вечному эффекту справа от инвентаря** ставит его на паузу. Эффекты на паузе рисуются серыми под ванильным списком, клик по ним включает обратно.
-- **Подсказка на зелье:** «Сила: 5/8 в эндер-сундуке», «∞ Сила: вечный», «⏸ … на паузе», «не может стать вечным».
-- **Клавиша** «пауза / включение всех вечных эффектов» (по умолчанию не назначена).
+- **The `/enderbrews` list updates in place.** The server tags the list with a hidden marker and a client with the mod removes the old copy when a new one arrives. Players without the mod just get the new list below.
+- **Click an endless effect** next to the inventory to pause it. Paused effects are drawn grey under the vanilla list, click them to turn them back on.
+- **Potion tooltips:** "Strength: 5/8 in Ender Chest", "∞ Strength: endless", "⏸ … paused", "can't become endless".
+- **A key** to pause / resume all endless effects (unbound by default).
 
-Как это устроено: сервер раз в пересчёт отправляет клиентам с модом пакет `enderbrews:status` (список эффектов, счётчики, пауза) — только если что-то изменилось. Клиент шлёт `enderbrews:pause` (один эффект или все). Формат — простые байты (`core/Protocol`), одинаковые у мода и плагина. Игроки без мода этих пакетов не получают, а клиент с модом на сервере без Ender Brews просто ничего не делает.
+How it works: after each recount the server sends clients with the mod an `enderbrews:status` packet (effect list, counters, pause), only if something changed. The client sends `enderbrews:pause` (one effect or all). The format is plain bytes (`core/Protocol`), the same for the mod and the plugin. Players without the mod don't get these packets, and a client with the mod on a server without Ender Brews simply does nothing.
 
-## 7. Конфиг (серверный, всё настраивается)
+## 7. Config (server side, everything is configurable)
 
-Файл `config/enderbrews.toml` (мод) или `plugins/EnderBrews/enderbrews.toml` (плагин), создаётся сам с комментариями. Перезагрузка без рестарта: `/enderbrews reload`.
+File `config/enderbrews.toml` (mod) or `plugins/EnderBrews/enderbrews.toml` (plugin), created automatically with comments. Reload without a restart: `/enderbrews reload`.
 
-| Опция | По умолчанию | Что делает |
+| Option | Default | What it does |
 |---|---|---|
-| `threshold` | 8 | Сколько зелий одного эффекта и уровня нужно (любое число ≥ 1) |
-| `threshold_overrides` | `[]` | Свой порог для эффекта, напр. `["minecraft:regeneration=32"]` |
-| `count_shulker_boxes` | true | Считать зелья в шалкерах внутри эндер-сундука |
-| `count_splash_and_lingering` | false | Считать взрывные и оседающие зелья |
-| `extra_potion_items` | `[]` | Доп. предметы с эффектами (зелья из модов): id или `#тег` |
-| `higher_level_counts_for_lower` | true | Сила II засчитывается и в Силу I |
-| `max_level` | 0 | Максимальный уровень вечного эффекта (1 = I); 0 — без ограничения |
-| `max_endless_effects` | 0 | Сколько вечных эффектов одновременно; 0 — без ограничения |
-| `allow_harmful_effects` | false | Разрешить вредные эффекты |
-| `blacklist` | заражение, слизистость, плетение, ветряной заряд | Запрещённые эффекты: id или `#тег` |
-| `whitelist` | `[]` | Если не пусто — разрешены только эти эффекты |
-| `always_allowed` | `[]` | Разрешить эффект, даже если игра считает его вредным |
-| `show_particles` | false | Частицы вокруг игрока |
-| `show_icon` | true | Иконка эффекта с «∞» |
-| `remove_on_logout` | true | Снимать при выходе и выдавать при входе (безопасное удаление мода) |
-| `apply_in_spectator` | false | Выдавать наблюдателям |
-| `allow_pause` | true | Разрешить игрокам паузу через `/enderbrews` |
-| `check_interval_ticks` | 20 | Как часто пересчитывать эндер-сундук (20 = 1 сек) |
+| `threshold` | 8 | How many potions of one effect and level are needed (any number ≥ 1) |
+| `threshold_overrides` | `[]` | Own threshold for an effect, e.g. `["minecraft:regeneration=32"]` |
+| `count_shulker_boxes` | true | Count potions in shulker boxes inside the Ender Chest |
+| `count_splash_and_lingering` | false | Count splash and lingering potions |
+| `extra_potion_items` | `[]` | Extra items with effects (potions from mods): id or `#tag` |
+| `higher_level_counts_for_lower` | true | Strength II also counts for Strength I |
+| `max_level` | 0 | Highest level of an endless effect (1 = I); 0 = no limit |
+| `max_endless_effects` | 0 | How many endless effects at once; 0 = no limit |
+| `allow_harmful_effects` | false | Allow harmful effects |
+| `blacklist` | infested, oozing, weaving, wind charged | Banned effects: id or `#tag` |
+| `whitelist` | `[]` | If not empty, only these effects are allowed |
+| `always_allowed` | `[]` | Allow an effect even if the game calls it harmful |
+| `show_particles` | false | Particles around the player |
+| `show_icon` | true | The effect icon with "∞" |
+| `remove_on_logout` | true | Remove on logout and give on join (safe mod removal) |
+| `apply_in_spectator` | false | Give to spectators |
+| `allow_pause` | true | Let players pause through `/enderbrews` |
+| `check_interval_ticks` | 20 | How often the Ender Chest is recounted (20 = 1 s) |
 
-Мгновенные эффекты (исцеление, вред) вечными не бывают никогда — это не настраивается. Молоко и тотем отдельной настройкой не управляются: вечные эффекты всегда возвращаются.
-
-## 8. Версии, загрузчики, плагин
-
-**Первая версия — Minecraft 1.21.1.** Другие версии добавим потом, если мод зайдёт.
-
-### Один jar на всё (как у TAB)
-Делаем **один универсальный файл** `EnderBrews.jar`, который одновременно и мод, и плагин. Так уже делает TAB от NEZNAMY: один jar на Modrinth помечен и как мод (Fabric, Quilt, Forge, NeoForge), и как плагин (Paper, Spigot, Purpur, Folia).
-
-| Платформа | Работает из того же jar |
-|---|---|
-| Fabric | да |
-| Quilt | да (Quilt запускает моды Fabric) |
-| NeoForge | да |
-| Forge | да |
-| Paper / Spigot / Purpur | да, как плагин |
-
-Почему это нам подходит:
-- Мод **чисто серверный** (никаких новых предметов и блоков) — как и TAB. Поэтому склеить всё в один файл реально.
-- Игроку и админу проще: скачал один файл, кинул в `mods` или `plugins` — работает.
-- Хорошо для страницы: «One jar. Every loader. Mods and plugins.»
-
-Как устроено внутри:
-- **Общая логика** (подсчёт зелий, пороги, какие эффекты разрешены, пауза, конфиг) пишется один раз.
-- Под каждую платформу — тонкая прослойка (события игры, команды). Каждый загрузчик видит в jar только свой файл описания и свою прослойку, остальное игнорирует.
-- Подводные камни: сборка сложнее, чем у обычного мода, и при поломке на одной платформе новый файл нужен всем. Плюс: каждая платформа проверяется отдельно перед релизом (раздел 16).
-- Как у TAB: часть **мода** привязана к версии Minecraft (сначала 1.21.1), часть **плагина** может работать на более широком диапазоне версий Paper.
-
-### Мод и плагин: чем отличаются
-
-| | Мод | Плагин |
-|---|---|---|
-| Подсчёт зелий в эндер-сундуке и шалкерах | да | да |
-| Вечные эффекты, пауза, конфиг, `/enderbrews` | да | да |
-| Достижения | да | да |
-| Подсказки «5/8» и клик по иконке эффекта | да (если мод и на клиенте) | нет (ванильный клиент) |
-| Настройка через теги датапака | да | списки в конфиге |
-| Одиночная игра | да | нет |
-
-- Молоко, тотем, команды: у плагина есть готовое событие смены эффектов с причиной (молоко, тотем, команда), так что защита вечных эффектов делается просто.
-- Гибридные серверы (Arclight, Mohist, Youer): jar надо класть **либо в `mods`, либо в `plugins`**, не в обе папки.
-- **Минимум зависимостей:** на Fabric/Quilt — только Fabric API, на остальных — ничего. Конфиг — свой простой файл.
-- Folia (многопоточный Paper) — позже.
-
-### Публикация
-- **Modrinth:** один проект, один файл в версии, отмечены все платформы (как у TAB).
-- **CurseForge:** моды и плагины в разных разделах — два проекта, в оба грузим тот же jar.
-- Плюс Hangar (сайт плагинов PaperMC) и SpigotMC.
-
-## 9. Название
-
-**Ender Brews**. Id мода: `enderbrews`, адрес на Modrinth: `ender-brews`, команда: `/enderbrews`.
-
-Краткое описание (EN): *Store potions in your Ender Chest — get their effects forever. Terraria-style infinite potions, shulker boxes supported, fully configurable.*
-
-## 10. Достижения
-
-Достижения — данные сервера, ванильный клиент их показывает. Отдельная вкладка с иконкой эндер-сундука.
-
-| Достижение | Условие |
-|---|---|
-| Запас на вечность | Первый вечный эффект |
-| Двойная доза | Вечный эффект II уровня |
-| Ходячая аптека | 5 вечных эффектов одновременно |
-| Погреб забит | Шалкер, полностью набитый одним зельем (27 шт.), в эндер-сундуке |
-| Алхимик Края (скрытое) | Все полезные ванильные эффекты вечные одновременно |
-
-Опция конфига `advancements` — выключить вкладку.
-
-## 11. Для сборщиков модпаков
-
-Вместо отдельных тегов мода — списки в конфиге, в которые можно вписывать и id, и теги (`#namespace:tag`, только в моде; в плагине — только id эффектов, теги предметов работают):
-- `extra_potion_items` — какие ещё предметы считаются зельями (например, зелья из другого мода);
-- `blacklist` / `whitelist` / `always_allowed` — какие эффекты могут стать вечными.
-
-Шалкеры и любые модовые предметы-контейнеры, которые хранят вещи как ванильный шалкер, считаются автоматически (`count_shulker_boxes`).
-
-## 12. Совместимость с другими модами
-
-| Тип мода | Поведение |
-|---|---|
-| Увеличенный эндер-сундук (больше слотов) | Читаем все слоты, сколько бы их ни было |
-| Общие «цветные» эндер-сундуки (EnderStorage и т.п.) | Не считаются: это не личный сундук, иначе весь сервер делил бы одни эффекты |
-| Рюкзаки внутри эндер-сундука (Sophisticated Backpacks, Traveler's Backpack) | Не в 1.0, позже через совместимость |
-| Моды на новые зелья | Работают сами, если хранят эффекты как ванильные зелья; иначе — через тег |
-| Моды, показывающие эффекты на экране | Покажут «∞», как у любого бесконечного эффекта |
-| Сортировщики инвентаря | Без проблем: мы только читаем содержимое |
-| Моды, выдающие свои эффекты (Origins и т.п.) | Не мешаем: трогаем только эффекты, выданные нами |
-| Моды, снимающие эффекты своим способом | Вечный эффект вернётся через ≤1 сек |
-| Боты/фейковые игроки (Carpet) | Работает так же, как для игрока |
-
-## 13. Языки
-
-- На релизе: английский, русский, украинский.
-- Следующими: китайский (большая аудитория, в т.ч. сайт mcmod.cn), португальский (BR), испанский, немецкий. Переводы от сообщества через GitHub.
-- В серверном режиме у игрока нет языкового файла мода, поэтому сервер сам переводит текст на язык, выбранный у игрока в настройках.
-
-## 14. Идеи на потом (не в 1.0, решить позже)
-
-- **Еда с эффектами** (золотые яблоки, подозрительное рагу) — по умолчанию не считается.
-- **Содержание**: вечный эффект раз в N минут съедает одно зелье из сундука. Для хардкорных серверов, по умолчанию выключено.
-- **Дороже за уровень**: порог × множитель для II уровня (напр. Сила I = 8, Сила II = 16). Опция `levelMultiplier`, по умолчанию 1.
-
-## 15. Страница мода и релиз
-
-**Страница:**
-- В самом начале GIF: кладёшь шалкер с зельями в эндер-сундук → у эффекта на экране появляется «∞».
-- Дальше «Как работает» в 3 строки, затем FAQ: работает ли с шалкерами (да), нужен ли мод на клиенте (нет), другие версии игры (позже), можно ли в модпак (да).
-- Галерея: эндер-сундук с шалкерами и «∞» на экране; `/enderbrews` с кнопками; вкладка достижений.
-- Modrinth: категории Utility, Game Mechanics; сервер — обязательно, клиент — по желанию.
-
-**Иконка** (делаешь сам): 512×512, должна читаться в размере 64×64 (так её видно в поиске), без текста. Идея: эндер-сундук + силуэт зелья или «∞».
-
-**Релиз:**
-- В один день на Modrinth, CurseForge, Hangar и SpigotMC — один jar для всех платформ.
-- Лицензия MIT, явно написать «можно в модпаки» — сборки дают больше всего скачиваний.
-- Пост с GIF на r/feedthebeast и r/Minecraft: «Terraria's best QoL feature, now in Minecraft». Страница на mcmod.cn для китайской аудитории.
-
-## 16. План проверки
-
-Каждая строка из раздела 5 — отдельная проверка в игре перед релизом. Плюс на каждой платформе (Fabric, Quilt, NeoForge, Forge, Paper, Spigot, Purpur) с одним и тем же jar: одиночка (для модов), сервер с модом на клиенте, сервер с ванильным клиентом.
-
-## 17. План версий
-- **1.0** — разделы 1–7, 11, 13 (en/ru/uk): один jar: мод на 4 загрузчика + плагин Paper/Spigot/Purpur.
-- **1.1** — клиентская часть (подсказки «5/8», ∞ на шалкере, клик по иконке для паузы), достижения.
-- **1.2** — рюкзаки других модов, новые языки, идеи из раздела 15 по отзывам.
+Instant effects (healing, harming) are never endless, this isn't configurable. Milk and the totem have no setting of their own: endless effects always come back.

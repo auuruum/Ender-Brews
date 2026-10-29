@@ -1,65 +1,52 @@
-<p align="center"><img src="docs/logo.png" alt="Ender Brews" width="256"></p>
+# <img src="docs/logo.png" alt="" width="72" align="absmiddle"> Ender Brews
 
-# Ender Brews
+[![Modrinth downloads](https://img.shields.io/modrinth/dt/ender-brews?logo=modrinth&label=Modrinth&color=1bd96a)](https://modrinth.com/project/ender-brews)
+[![CurseForge](https://img.shields.io/badge/CurseForge-Ender%20Brews-f16436?logo=curseforge&logoColor=white)](https://www.curseforge.com/minecraft/mc-mods/ender-brews)
+[![Latest version](https://img.shields.io/modrinth/v/ender-brews?logo=modrinth&label=version&color=1bd96a)](https://modrinth.com/project/ender-brews/versions)
+[![Minecraft](https://img.shields.io/modrinth/game-versions/ender-brews?logo=minecraft&label=Minecraft&color=62b47a)](https://modrinth.com/project/ender-brews/versions)
+[![GitHub stars](https://img.shields.io/github/stars/auuruum/Ender-Brews?logo=github&color=yellow)](https://github.com/auuruum/Ender-Brews)
+[![License](https://img.shields.io/github/license/auuruum/Ender-Brews?color=blue)](LICENSE)
 
-**Store potions in your Ender Chest — get their effects forever.**
-Terraria-style infinite potions for Minecraft 26.1 – 26.3.
+Put 8 potions of the same kind in your Ender Chest and that effect becomes endless. Take them out and it's gone.
 
-One jar for **Fabric · Quilt · NeoForge · Forge** and the **Paper / Spigot / Purpur** plugin API.
+<p align="center">
+  <a href="https://youtu.be/_1pOw55mNeg"><img src="https://img.youtube.com/vi/_1pOw55mNeg/maxresdefault.jpg" alt="Ender Brews showcase" width="640"></a>
+</p>
 
-This branch targets **Minecraft 26.1 – 26.3 (every 26.1.x, 26.2 and 26.3) and Java 25**: the same jar runs on all of them. The **1.21.1** version is maintained on the `1.21.1` branch; download the jar that matches your Minecraft version. See [validation notes](docs/VALIDATION-26.3.md) for the tested server and client combinations.
+<p align="center">
+  <a href="https://modrinth.com/project/ender-brews"><img src="https://raw.githubusercontent.com/intergrav/devins-badges/v3/assets/cozy/available/modrinth_vector.svg" alt="Available on Modrinth" height="64"></a>
+  &nbsp;
+  <a href="https://www.curseforge.com/minecraft/mc-mods/ender-brews"><img src="https://raw.githubusercontent.com/intergrav/devins-badges/v3/assets/cozy/available/curseforge_vector.svg" alt="Available on CurseForge" height="64"></a>
+</p>
 
 ## How it works
 
-- Put **8 potions of the same kind** in your Ender Chest (or in a shulker box inside it) and that effect becomes **endless**: it shows `∞` and never runs out.
-- Take the potions out and the effect is gone.
-- Only the Ender Chest counts — not your inventory, not other chests.
-- Harmful effects (poison, weakness, slowness…) and instant ones (healing, harming) never become endless.
-- A stronger potion still works on top: drink Strength II while you have endless Strength I and you get II until it runs out, then endless I comes back.
-- Milk and totems can't take endless effects away; they come right back.
-- `/enderbrews` lists your effects and lets you **pause** any of them with a click (great for invisibility or slow falling while building).
+- Only the Ender Chest counts (shulker boxes inside it too).
+- Instant effects never become endless. Harmful ones don't either, unless you enable `allow_harmful_effects`.
+- A stronger potion stacks on top: Strength II over endless Strength I gives II, then I comes back.
+- Milk and totems can't remove endless effects.
+- `/enderbrews` lists your effects. Click one to pause it.
 
-Everything is configurable in `config/enderbrews.toml` (mod) or `plugins/EnderBrews/enderbrews.toml` (plugin): the threshold (1, 16, 64…), per-effect thresholds, max level, max number of endless effects, black/whitelists, shulker boxes, splash potions and more. Reload with `/enderbrews reload`.
+## Install
 
-The mod only needs to be on the **server**. Players with a vanilla client can join, and in singleplayer you just install it.
+One jar for Fabric, Quilt, NeoForge, Forge and Paper / Spigot / Purpur. Minecraft 26.1 to 26.3, Java 25. For 1.21.1 see the [`1.21.1` branch](../../tree/1.21.1).
 
-### Extras with the mod on your client
+It only has to be on the server. Vanilla clients can join. Installing it on the client as well adds potion tooltips (`Strength: 5/8 in Ender Chest`), live-updating chat list and a pause-all key.
 
-Installing the same jar on the client is optional and adds a few small things. They work on servers running the mod or the plugin:
+## Config
 
-- The `/enderbrews` list updates **in place** in chat instead of piling up.
-- **Click an endless effect** next to your inventory to pause it. Paused effects show greyed out below the list; click one to resume it.
-- **Potion tooltips** show your progress: `Strength: 5/8 in Ender Chest`, or `∞ Strength: endless`.
-- A key to **pause / resume all** endless effects (unbound by default, set it in Controls → Ender Brews).
-
-## Commands
-
-| Command | Who | What |
-|---|---|---|
-| `/enderbrews` | everyone | Your endless effects, progress and pause buttons |
-| `/enderbrews pause\|resume\|toggle <effect>` | everyone | Pause or resume one of your endless effects |
-| `/enderbrews reload` | operators (`enderbrews.reload`) | Reload the config |
+`config/enderbrews.toml` (plugin: `plugins/EnderBrews/enderbrews.toml`). Every option is commented in the file. Reload with `/enderbrews reload` (permission `enderbrews.reload`).
 
 ## Building
 
-Requires Java 25.
+Needs Java 25.
 
 ```bash
 ./gradlew build
 ```
 
-The universal jar ends up in `build/libs/EnderBrews-<version>+mc26.1-26.3.jar`. This includes the plugin, so this jar requires Java 25 on every platform.
-
-`./gradlew build` also runs the shared rule and protocol tests. For tests with real servers and clients, see [tools/ingame-test/README.md](tools/ingame-test/README.md).
-
-Project layout:
-
-- `shared/` — code shared by every platform: `core` (plain Java rules, config, translations) and `common` (vanilla Minecraft code for the mod loaders). Each platform compiles its own relocated copy (`dev.enderbrews.<platform>.*`), which is what lets all of them live in one jar.
-- `fabric/`, `neoforge/`, `forge/` — thin loader entry points.
-- `bukkit/` — the Paper / Spigot / Purpur plugin.
-- `tools/ingame-test/` — starts real servers and checks the jar with a vanilla bot.
-- `docs/DESIGN.md` — the design and every edge case.
+The jar is in `build/libs/`. Design notes: [docs/DESIGN.md](docs/DESIGN.md). Real-server tests: [tools/ingame-test](tools/ingame-test/README.md).
 
 ## License
 
-MIT
+[MIT](LICENSE)
