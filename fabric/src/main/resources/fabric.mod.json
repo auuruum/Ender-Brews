@@ -12,6 +12,7 @@
         "sources": "${sources}"
     },
     "license": "${license}",
+    "icon": "assets/enderbrews/icon.png",
     "environment": "*",
     "entrypoints": {
         "main": [

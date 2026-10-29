@@ -1,3 +1,5 @@
+<p align="center"><img src="docs/logo.png" alt="Ender Brews" width="256"></p>
+
 # Ender Brews
 
 **Store potions in your Ender Chest — get their effects forever.**
