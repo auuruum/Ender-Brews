@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
-import net.minecraft.core.Holder;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffect;
@@ -120,7 +119,7 @@ public final class EnderBrewsServer {
         }
         if (request.effectId() == null) {
             setAllPaused(player, request.paused());
-        } else if (VanillaEffects.holder(request.effectId()).isPresent()) {
+        } else if (VanillaEffects.effect(request.effectId()).isPresent()) {
             setPaused(player, request.effectId(), request.paused());
         }
     }
@@ -137,11 +136,11 @@ public final class EnderBrewsServer {
     private void refresh(ServerPlayer player, PlayerState state) {
         state.statuses = EndlessRules.evaluate(EnderChestScanner.scan(player, config), config, VanillaEffects.INSTANCE);
 
-        Map<Holder<MobEffect>, Integer> endless = new LinkedHashMap<>();
+        Map<MobEffect, Integer> endless = new LinkedHashMap<>();
         if (!player.isSpectator() || config.applyInSpectator()) {
             for (EffectStatus status : state.statuses) {
                 if (status.state() == EffectStatus.State.ACTIVE && !isPaused(player, status.effectId())) {
-                    VanillaEffects.holder(status.effectId()).ifPresent(effect -> endless.put(effect, status.amplifier()));
+                    VanillaEffects.effect(status.effectId()).ifPresent(effect -> endless.put(effect, status.amplifier()));
                 }
             }
         }
@@ -172,7 +171,7 @@ public final class EnderBrewsServer {
 
     private static final class PlayerState {
         List<EffectStatus> statuses = List.of();
-        Map<Holder<MobEffect>, Integer> applied = new LinkedHashMap<>();
+        Map<MobEffect, Integer> applied = new LinkedHashMap<>();
         boolean dirty = true;
         byte[] lastSent;
     }

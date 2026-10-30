@@ -1,24 +1,21 @@
 // Holds the code shared by all platforms. It is compiled here only so the IDE and the
 // unit tests can check it; the platforms compile their own relocated copies.
 //   dev.enderbrews.shared.core   - plain Java (rules, config, translations), used everywhere
-//   dev.enderbrews.shared.common - vanilla Minecraft code, used by Fabric, NeoForge and Forge
-//   dev.enderbrews.shared.client - optional client extras, used by Fabric, NeoForge and Forge
+//   dev.enderbrews.shared.common - vanilla Minecraft code, used by Fabric and Forge
+//   dev.enderbrews.shared.client - optional client extras, used by Fabric and Forge
 plugins {
     id 'enderbrews-java'
-    id 'net.neoforged.moddev'
+    id 'net.neoforged.moddev.legacyforge'
 }
 
-neoForge {
-    neoFormVersion = neo_form_version
+legacyForge {
+    mcpVersion = minecraft_version
     runs {
         // A plain vanilla client (no mod loader runs, so Ender Brews is not loaded), for checking
         // how the server side looks to players without the mod:
         // ./gradlew :shared:runVanillaClient -PquickPlay=localhost:25566 -Pusername=Vanilla
         vanillaClient {
             client()
-            // Required JVM options from the Minecraft 26.3 version manifest.
-            jvmArguments.addAll('-XX:StackShadowPages=32', '--enable-native-access=ALL-UNNAMED',
-                    '--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED')
             gameDirectory = project.file(providers.gradleProperty('vanillaGameDir').getOrElse('runs/vanilla-client'))
             if (project.hasProperty('quickPlay')) {
                 programArguments.addAll('--quickPlayMultiplayer', project.property('quickPlay').toString())

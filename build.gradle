@@ -2,24 +2,21 @@ plugins {
     // see https://fabricmc.net/develop/ for new versions
     id 'net.fabricmc.fabric-loom-remap' version '1.19.3' apply false
     // see https://projects.neoforged.net/neoforged/moddevgradle for new versions
-    id 'net.neoforged.moddev' version '2.0.148' apply false
-    // see https://files.minecraftforge.net for new versions
-    id 'net.minecraftforge.gradle' version '[7.0.17,8)' apply false
+    id 'net.neoforged.moddev.legacyforge' version '2.0.148' apply false
 }
 
 evaluationDependsOnChildren()
 
-// One jar that is at the same time a Fabric/Quilt mod, a NeoForge mod, a Forge mod
-// and a Bukkit/Spigot/Paper plugin. Each loader only reads its own metadata file
-// (fabric.mod.json, META-INF/neoforge.mods.toml, META-INF/mods.toml, plugin.yml)
-// and only ever loads classes from its own dev.enderbrews.<platform> package.
-// Minecraft 1.21.x is obfuscated: the Fabric jar is remapped to intermediary names, while
-// NeoForge and Forge run on Mojang names. Each target in versions/ builds its own jar.
+// One jar that is at the same time a Fabric/Quilt mod, a Forge/NeoForge mod and a
+// Bukkit/Spigot/Paper plugin. Each loader only reads its own metadata file
+// (fabric.mod.json, META-INF/mods.toml, plugin.yml) and only ever loads classes from its own
+// dev.enderbrews.<platform> package.
+// Minecraft 1.20.1 is obfuscated: the Fabric jar is remapped to intermediary names, the Forge jar
+// to SRG names.
 def platformJars = [
-        ':fabric'  : 'remapJar',
-        ':neoforge': 'jar',
-        ':forge'   : 'jar',
-        ':bukkit'  : 'jar',
+        ':fabric': 'remapJar',
+        ':forge' : 'reobfJar',
+        ':bukkit': 'jar',
 ]
 
 tasks.register('universalJar', Jar) {
@@ -34,22 +31,20 @@ tasks.register('universalJar', Jar) {
     platformJars.each { path, taskName ->
         def platformJar = project(path).tasks.named(taskName)
         dependsOn(platformJar)
-        from({ zipTree(platformJar.get().archiveFile) }) {
+        from({ zipTree(platformJar.get().outputs.files.singleFile) }) {
             exclude 'META-INF/MANIFEST.MF'
         }
     }
 
     manifest {
         attributes([
-                'Specification-Title'           : mod_name,
-                'Specification-Vendor'          : mod_author,
-                'Specification-Version'         : version,
-                'Implementation-Title'          : mod_name,
-                'Implementation-Version'        : version,
-                'Implementation-Vendor'         : mod_author,
-                'Built-On-Minecraft'            : minecraft_version,
-                // The plugin only uses the Bukkit API, so Paper does not need to remap the jar.
-                'paperweight-mappings-namespace': 'mojang'
+                'Specification-Title'   : mod_name,
+                'Specification-Vendor'  : mod_author,
+                'Specification-Version' : version,
+                'Implementation-Title'  : mod_name,
+                'Implementation-Version': version,
+                'Implementation-Vendor' : mod_author,
+                'Built-On-Minecraft'    : minecraft_version
         ])
     }
 }
@@ -58,4 +53,3 @@ tasks.register('build') {
     group = 'build'
     dependsOn('universalJar')
 }
-

@@ -19,20 +19,6 @@ repositories {
     mavenCentral()
 }
 
-// The sources serve every 1.21.x target; //#if lines pick the code for this target's Minecraft.
-Preprocessor.selfTest()
-def mcVersion = minecraft_version
-def preprocessed = tasks.register('preprocessSources', Sync) {
-    from(file('src/main/java'))
-    into(layout.buildDirectory.dir('generated/preprocessed'))
-    inputs.property('minecraft_version', mcVersion)
-    eachFile { details ->
-        def preprocessor = new Preprocessor(mcVersion)
-        details.filter { String line -> preprocessor.line(line) }
-    }
-}
-sourceSets.main.java.srcDirs = [preprocessed]
-
 jar {
     from(rootProject.file('LICENSE')) {
         rename { "${it}_${mod_id}" }
@@ -54,9 +40,6 @@ processResources {
             'description'                  : project.description,
             'homepage'                     : homepage,
             'sources'                      : sources,
-            'neoforge_version'             : neoforge_version,
-            'neoforge_min_version'         : neoforge_min_version,
-            'neoforge_loader_version_range': neoforge_loader_version_range,
             'forge_version'                : forge_version,
             'forge_min_version'            : forge_min_version,
             'forge_loader_version_range'   : forge_loader_version_range,
@@ -65,7 +48,7 @@ processResources {
             'pack_format'                  : pack_format
     ]
 
-    filesMatching(['pack.mcmeta', 'fabric.mod.json', 'META-INF/mods.toml', 'META-INF/neoforge.mods.toml', 'plugin.yml']) {
+    filesMatching(['pack.mcmeta', 'fabric.mod.json', 'META-INF/mods.toml', 'plugin.yml']) {
         expand expandProps
     }
     inputs.properties(expandProps)

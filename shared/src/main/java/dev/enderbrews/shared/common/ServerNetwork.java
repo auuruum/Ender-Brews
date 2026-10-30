@@ -9,4 +9,7 @@ public interface ServerNetwork {
     boolean canSendStatus(ServerPlayer player);
 
     void sendStatus(ServerPlayer player, byte[] data);
+
+    /** The language the player's client reports, like {@code en_us}. */
+    String language(ServerPlayer player);
 }

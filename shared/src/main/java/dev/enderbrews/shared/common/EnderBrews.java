@@ -30,6 +30,10 @@ public final class EnderBrews {
         network = serverNetwork;
     }
 
+    static String language(ServerPlayer player) {
+        return network == null ? "en_us" : network.language(player);
+    }
+
     public static void serverStarted(MinecraftServer minecraftServer, Path configDir) {
         server = new EnderBrewsServer(minecraftServer, configDir, network);
     }

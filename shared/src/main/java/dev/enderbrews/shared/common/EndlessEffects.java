@@ -3,7 +3,6 @@ package dev.enderbrews.shared.common;
 import dev.enderbrews.shared.core.EnderBrewsConfig;
 import java.util.ArrayList;
 import java.util.Map;
-import net.minecraft.core.Holder;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -22,7 +21,7 @@ final class EndlessEffects {
     private EndlessEffects() {
     }
 
-    static MobEffectInstance create(Holder<MobEffect> effect, int amplifier, EnderBrewsConfig config) {
+    static MobEffectInstance create(MobEffect effect, int amplifier, EnderBrewsConfig config) {
         return new MobEffectInstance(effect, MobEffectInstance.INFINITE_DURATION, amplifier, true,
                 config.showParticles(), config.showIcon());
     }
@@ -32,7 +31,7 @@ final class EndlessEffects {
     }
 
     /** Makes sure every endless effect is on the player, unless a stronger one already covers it. */
-    static void keep(ServerPlayer player, Map<Holder<MobEffect>, Integer> endless, EnderBrewsConfig config) {
+    static void keep(ServerPlayer player, Map<MobEffect, Integer> endless, EnderBrewsConfig config) {
         endless.forEach((effect, amplifier) -> {
             MobEffectInstance current = player.getEffect(effect);
             if (current == null
@@ -44,7 +43,7 @@ final class EndlessEffects {
     }
 
     /** Takes one endless effect away without touching effects that came from elsewhere. */
-    static void remove(ServerPlayer player, Holder<MobEffect> effect, int amplifier) {
+    static void remove(ServerPlayer player, MobEffect effect, int amplifier) {
         MobEffectInstance current = player.getEffect(effect);
         if (current == null) {
             return;

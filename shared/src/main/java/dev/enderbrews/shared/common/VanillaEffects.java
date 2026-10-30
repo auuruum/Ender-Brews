@@ -2,7 +2,6 @@ package dev.enderbrews.shared.common;
 
 import dev.enderbrews.shared.core.EffectInfo;
 import java.util.Optional;
-import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
@@ -18,32 +17,29 @@ final class VanillaEffects implements EffectInfo {
     private VanillaEffects() {
     }
 
-    static Optional<Holder.Reference<MobEffect>> holder(String effectId) {
+    static Optional<MobEffect> effect(String effectId) {
         ResourceLocation id = ResourceLocation.tryParse(effectId);
-        //#if >=1.21.2
-        return id == null ? Optional.empty() : BuiltInRegistries.MOB_EFFECT.get(id);
-        //#else
-        return id == null ? Optional.empty() : BuiltInRegistries.MOB_EFFECT.getHolder(id);
-        //#endif
+        return id == null ? Optional.empty() : BuiltInRegistries.MOB_EFFECT.getOptional(id);
     }
 
-    static String id(Holder<MobEffect> effect) {
-        return effect.unwrapKey().map(key -> key.location().toString()).orElse("unknown:unknown");
+    static String id(MobEffect effect) {
+        ResourceLocation id = BuiltInRegistries.MOB_EFFECT.getKey(effect);
+        return id == null ? "unknown:unknown" : id.toString();
     }
 
     @Override
     public boolean exists(String effectId) {
-        return holder(effectId).isPresent();
+        return effect(effectId).isPresent();
     }
 
     @Override
     public boolean isHarmful(String effectId) {
-        return holder(effectId).map(h -> h.value().getCategory() == MobEffectCategory.HARMFUL).orElse(false);
+        return effect(effectId).map(e -> e.getCategory() == MobEffectCategory.HARMFUL).orElse(false);
     }
 
     @Override
     public boolean isInstant(String effectId) {
-        return holder(effectId).map(h -> h.value().isInstantenous()).orElse(false);
+        return effect(effectId).map(MobEffect::isInstantenous).orElse(false);
     }
 
     @Override
@@ -52,6 +48,10 @@ final class VanillaEffects implements EffectInfo {
             return entry.equals(effectId);
         }
         ResourceLocation tag = ResourceLocation.tryParse(entry.substring(1));
-        return tag != null && holder(effectId).map(h -> h.is(TagKey.create(Registries.MOB_EFFECT, tag))).orElse(false);
+        return tag != null && effect(effectId)
+                .flatMap(BuiltInRegistries.MOB_EFFECT::getResourceKey)
+                .flatMap(BuiltInRegistries.MOB_EFFECT::getHolder)
+                .map(h -> h.is(TagKey.create(Registries.MOB_EFFECT, tag)))
+                .orElse(false);
     }
 }

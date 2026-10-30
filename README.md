@@ -39,25 +39,16 @@ It only has to be on the server. Vanilla clients can join. Installing it on the 
 
 ## Building
 
-This branch is the Minecraft 1.21.x line (1.21 – 1.21.11); the 26.x line lives on `port/26.3`. Needs Java 21.
-Each jar covers a range of releases and runs on Fabric, Quilt, NeoForge, Forge and Paper/Spigot:
-
-| Jar | Minecraft |
-| --- | --- |
-| `EnderBrews-<version>+mc1.21-1.21.1.jar` | 1.21, 1.21.1 |
-| `EnderBrews-<version>+mc1.21.2-1.21.4.jar` | 1.21.2, 1.21.3, 1.21.4 |
-| `EnderBrews-<version>+mc1.21.5.jar` | 1.21.5 |
-| `EnderBrews-<version>+mc1.21.6-1.21.8.jar` | 1.21.6, 1.21.7, 1.21.8 |
-| `EnderBrews-<version>+mc1.21.9-1.21.10.jar` | 1.21.9, 1.21.10 |
-| `EnderBrews-<version>+mc1.21.11.jar` | 1.21.11 |
+This branch is the Minecraft 1.20.1 line; 1.21.x lives on `port/1.21` and 26.x on `port/26.3`. Needs Java 17 for the
+mod and Java 21 or newer to run Gradle.
 
 ```bash
-./gradlew build -Ptarget=1.21.1
+./gradlew build
 ```
 
-builds one jar into `build/libs/` (targets are the files in `versions/`). `./build-all.ps1` builds all of them into
-`build/release/`. Code that differs between releases is picked with `//#if >=1.21.6` lines, see
-[Preprocessor.groovy](buildSrc/src/main/groovy/Preprocessor.groovy).
+builds `build/libs/EnderBrews-<version>+mc1.20.1.jar`. It runs on Fabric, Quilt, Forge, NeoForge and Paper/Spigot.
+NeoForge 1.20.1 still is Forge 47, so it loads the Forge side of the jar and has no module of its own.
+Checks on real servers and clients: [docs/VALIDATION-1.20.1.md](docs/VALIDATION-1.20.1.md).
 Design notes: [docs/DESIGN.md](docs/DESIGN.md). Real-server tests: [tools/ingame-test](tools/ingame-test/README.md).
 
 ## License

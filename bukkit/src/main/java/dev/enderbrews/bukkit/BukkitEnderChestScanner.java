@@ -14,8 +14,9 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.PotionMeta;
+import org.bukkit.potion.Potion;
+import org.bukkit.potion.PotionData;
 import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionType;
 
 /** Counts the potions in a player's Ender Chest, including those inside shulker boxes there. */
 final class BukkitEnderChestScanner {
@@ -54,11 +55,9 @@ final class BukkitEnderChestScanner {
             return;
         }
         Map<String, Integer> effects = new HashMap<>();
-        PotionType base = meta.getBasePotionType();
-        if (base != null) {
-            for (PotionEffect effect : base.getPotionEffects()) {
-                effects.merge(BukkitEffects.id(effect.getType()), effect.getAmplifier(), Math::max);
-            }
+        PotionData base = meta.getBasePotionData();
+        for (PotionEffect effect : Potion.getBrewer().getEffects(base.getType(), base.isUpgraded(), base.isExtended())) {
+            effects.merge(BukkitEffects.id(effect.getType()), effect.getAmplifier(), Math::max);
         }
         for (PotionEffect effect : meta.getCustomEffects()) {
             effects.merge(BukkitEffects.id(effect.getType()), effect.getAmplifier(), Math::max);

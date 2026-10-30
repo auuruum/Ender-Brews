@@ -1,9 +1,6 @@
 {
     "pack": {
         "description": "Ender Brews",
-        "pack_format": ${pack_format},
-        "supported_formats": [34, 99],
-        "min_format": 34,
-        "max_format": 99
+        "pack_format": ${pack_format}
     }
 }

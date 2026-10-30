@@ -3,19 +3,22 @@ package dev.enderbrews.shared.common;
 import dev.enderbrews.shared.core.EnderBrewsConfig;
 import dev.enderbrews.shared.core.PotionTally;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.Container;
 import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.alchemy.PotionContents;
-import net.minecraft.world.item.component.ItemContainerContents;
+import net.minecraft.world.item.alchemy.PotionUtils;
 
 /** Counts the potions in a player's Ender Chest, including those inside shulker boxes there. */
 final class EnderChestScanner {
@@ -30,11 +33,14 @@ final class EnderChestScanner {
             ItemStack stack = enderChest.getItem(slot);
             countStack(stack, config, tally);
             if (config.countShulkerBoxes()) {
-                // Shulker boxes (and any modded container item using the vanilla component) hold
-                // their items here. Only one level deep: containers inside containers do not count.
-                ItemContainerContents contents = stack.get(DataComponents.CONTAINER);
-                if (contents != null) {
-                    contents.nonEmptyItems().forEach(inner -> countStack(inner, config, tally));
+                // Shulker boxes (and any modded container item that saves its items the vanilla way)
+                // hold them here. Only one level deep: containers inside containers do not count.
+                CompoundTag blockEntity = BlockItem.getBlockEntityData(stack);
+                if (blockEntity != null) {
+                    ListTag items = blockEntity.getList("Items", Tag.TAG_COMPOUND);
+                    for (int i = 0; i < items.size(); i++) {
+                        countStack(ItemStack.of(items.getCompound(i)), config, tally);
+                    }
                 }
             }
         }
@@ -45,12 +51,9 @@ final class EnderChestScanner {
         if (stack.isEmpty() || !isCountedPotion(stack, config)) {
             return;
         }
-        PotionContents contents = stack.get(DataComponents.POTION_CONTENTS);
-        if (contents == null) {
-            return;
-        }
+        List<MobEffectInstance> contents = PotionUtils.getMobEffects(stack);
         Map<String, Integer> effects = new HashMap<>();
-        for (MobEffectInstance effect : contents.getAllEffects()) {
+        for (MobEffectInstance effect : contents) {
             effects.merge(VanillaEffects.id(effect.getEffect()), effect.getAmplifier(), Math::max);
         }
         if (effects.isEmpty()) {

@@ -6,16 +6,16 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import net.minecraft.ChatFormatting;
-import net.minecraft.core.Holder;
-import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.alchemy.PotionContents;
+import net.minecraft.world.item.alchemy.PotionUtils;
 
 /** Adds "5/8 in Ender Chest" or "endless" lines to potion tooltips. */
 final class PotionTooltips {
@@ -28,12 +28,8 @@ final class PotionTooltips {
         if (snapshot == null || !stack.is(Items.POTION)) {
             return;
         }
-        PotionContents contents = stack.get(DataComponents.POTION_CONTENTS);
-        if (contents == null) {
-            return;
-        }
         Set<String> seen = new HashSet<>();
-        for (MobEffectInstance effect : contents.getAllEffects()) {
+        for (MobEffectInstance effect : PotionUtils.getMobEffects(stack)) {
             String effectId = effectId(effect.getEffect());
             Protocol.Entry entry = snapshot.find(effectId);
             if (entry == null || !seen.add(effectId)) {
@@ -53,13 +49,14 @@ final class PotionTooltips {
         }
     }
 
-    static String effectId(Holder<MobEffect> effect) {
-        return effect.unwrapKey().map(key -> key.location().toString()).orElse("");
+    static String effectId(MobEffect effect) {
+        ResourceLocation id = BuiltInRegistries.MOB_EFFECT.getKey(effect);
+        return id == null ? "" : id.toString();
     }
 
     /** Effect name with its level, written the way the inventory shows it. */
-    static MutableComponent name(Holder<MobEffect> effect, int amplifier) {
-        MutableComponent name = effect.value().getDisplayName().copy();
+    static MutableComponent name(MobEffect effect, int amplifier) {
+        MutableComponent name = effect.getDisplayName().copy();
         if (amplifier >= 1 && amplifier <= 9) {
             name.append(CommonComponents.SPACE).append(Component.translatable("enchantment.level." + (amplifier + 1)));
         }

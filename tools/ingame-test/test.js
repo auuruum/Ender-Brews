@@ -1,7 +1,7 @@
 // In-game test of the universal Ender Brews jar on a real server, driven by a vanilla bot.
-// Usage: node test.js <fabric|neoforge|forge|paper> [minecraft version, default 1.21.1]
-// Expects servers121/<minecraft>/<platform>/ (see install121.sh) with the jar in mods/ or plugins/
-// (see README.md next to this file). Set JAVA to a Java 21 binary if `java` is not Java 21.
+// Usage: node test.js <fabric|forge|neoforge|paper>
+// Expects servers120/1.20.1/<platform>/ (see install.sh) with the jar in mods/ or plugins/
+// (see README.md next to this file). Set JAVA to a Java 17 binary if `java` is not Java 17.
 const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
@@ -11,10 +11,8 @@ const nbt = require('prismarine-nbt');
 
 const JAVA = process.env.JAVA || 'java';
 const platform = process.argv[2];
-const MC = process.argv[3] || '1.21.1';
-// Mineflayer has no data for these two, but they share the protocol of the next release.
-const BOT_VERSION = { '1.21.2': '1.21.3', '1.21.7': '1.21.8' }[MC] || MC;
-const ROOT = process.env.EB_SERVERS || path.join(__dirname, 'servers121', MC);
+const MC = '1.20.1';
+const ROOT = process.env.EB_SERVERS || path.join(__dirname, 'servers120', MC);
 const PORT = 25599;
 const BOT = 'BrewBot';
 /** The argument file the NeoForge / Forge installer wrote, whatever loader version it installed. */
@@ -26,12 +24,12 @@ function argsFile(dir) {
 const SERVERS = {
   fabric: () => ['-jar', 'server.jar', 'nogui'],
   paper: () => ['-jar', 'paper.jar', 'nogui'],
-  neoforge: () => [argsFile('net/neoforged/neoforge'), 'nogui'],
+  neoforge: () => [argsFile('net/neoforged/forge'), 'nogui'],
   forge: () => [argsFile('net/minecraftforge/forge'), 'nogui'],
 };
 const LOADED = {
   fabric: /enderbrews 1\.0\.0/,
-  neoforge: /enderbrews/i,
+  neoforge: /Found valid mod file EnderBrews.* with \{enderbrews\}/,
   forge: /Found valid mod file EnderBrews.* with \{enderbrews\}/,
   paper: /Enabling EnderBrews v1\.0\.0/,
 };
@@ -66,26 +64,34 @@ function send(cmd) { server.stdin.write(cmd + '\n'); }
 
 async function effects() {
   const from = output.length;
-  send(`data get entity ${BOT} active_effects`);
-  const m = await waitFor(/(has the following entity data: (.*)|Found no elements matching active_effects)/, 10000, from);
+  send(`data get entity ${BOT} ActiveEffects`);
+  const m = await waitFor(/(has the following entity data: (.*)|Found no elements matching ActiveEffects)/, 10000, from);
   return m[2] || '';
 }
 
-/** Finds one effect in `data get` output. Effects are flat compounds except for hidden_effect. */
-function effect(data, id) {
-  const compounds = [];
-  let depth = 0, start = -1;
-  for (let i = 0; i < data.length; i++) {
-    if (data[i] === '{') { if (depth === 0) start = i; depth++; }
-    else if (data[i] === '}') { depth--; if (depth === 0) compounds.push(data.slice(start, i + 1)); }
+const EFFECT_IDS = { speed: 1, strength: 5, poison: 19 };
+
+/** The whole compound that opens at data[start]. */
+function compoundAt(data, start) {
+  let depth = 0;
+  for (let i = start; i < data.length; i++) {
+    if (data[i] === '{') depth++;
+    else if (data[i] === '}' && --depth === 0) return data.slice(start, i + 1);
   }
-  for (const c of compounds) {
-    const top = c.replace(/hidden_effect: \{[^{}]*\}/, '');
-    if (top.includes(`id: "minecraft:${id}"`)) {
-      // Fields at their default value (amplifier 0, ambient false) are left out of the output.
-      const num = k => { const m = top.match(new RegExp(k + ': (-?\\d+)')); return m ? +m[1] : 0; };
-      const hidden = c.match(/hidden_effect: (\{[^{}]*\})/);
-      return { amplifier: num('amplifier'), duration: num('duration'), ambient: num('ambient'), hidden: hidden ? hidden[1] : null };
+  return data.slice(start);
+}
+
+/** Finds one effect in `data get` output. Its hidden effect (and Forge's curative items) nest inside it. */
+function effect(data, id) {
+  for (let i = data.indexOf('{'); i >= 0; ) {
+    const c = compoundAt(data, i);
+    i = data.indexOf('{', i + c.length);
+    const at = c.indexOf('HiddenEffect: {');
+    const hidden = at < 0 ? null : compoundAt(c, at + 'HiddenEffect: '.length);
+    const top = hidden ? c.replace(hidden, '') : c;
+    if (new RegExp(`\\bId: ${EFFECT_IDS[id]}b?\\b`).test(top)) {
+      const num = k => { const m = top.match(new RegExp(`\\b${k}: (-?\\d+)`)); return m ? +m[1] : 0; };
+      return { amplifier: num('Amplifier'), duration: num('Duration'), ambient: num('Ambient'), hidden };
     }
   }
   return null;
@@ -113,7 +119,7 @@ function pausePacket(effectId, paused) {
   return Buffer.concat(parts);
 }
 
-const potion = p =>`minecraft:potion[minecraft:potion_contents={potion:"minecraft:${p}"}]`;
+const potion = p => `minecraft:potion{Potion:"minecraft:${p}"}`;
 function fill(from, to, p) { for (let i = from; i <= to; i++) send(`item replace entity ${BOT} enderchest.${i} with ${potion(p)}`); }
 function clearSlot(i) { send(`item replace entity ${BOT} enderchest.${i} with minecraft:air`); }
 
@@ -135,13 +141,13 @@ async function main() {
   await waitFor(/Done \([\d.,]+s\)!/, 600000);
   check('server starts with the jar', true);
   const debugLog = path.join(cwd, 'logs', 'debug.log');
-  const fullLog = output + (platform === 'forge' && fs.existsSync(debugLog) ? fs.readFileSync(debugLog, 'utf8') : '');
+  const fullLog = output + (platform !== 'fabric' && platform !== 'paper' && fs.existsSync(debugLog) ? fs.readFileSync(debugLog, 'utf8') : '');
   check('Ender Brews is loaded', LOADED[platform].test(fullLog), 'not found in log');
 
   const messages = [];
   const rawMessages = [];
   const statuses = [];
-  const bot = mineflayer.createBot({ host: '127.0.0.1', port: PORT, username: BOT, version: BOT_VERSION, auth: 'offline' });
+  const bot = mineflayer.createBot({ host: '127.0.0.1', port: PORT, username: BOT, version: MC, auth: 'offline' });
   bot.on('message', m => { messages.push(m.toString()); rawMessages.push(JSON.stringify(m.json)); });
   bot._client.on('custom_payload', packet => {
     if (packet.channel === 'enderbrews:status') statuses.push(decodeStatus(packet.data));
@@ -169,7 +175,7 @@ async function main() {
   await sleep(300);
   s = effect(await effects(), 'strength');
   check('drinking Strength II puts it on top, endless I hidden underneath',
-    s && s.amplifier === 1 && s.duration > 0 && s.hidden && /duration: -1/.test(s.hidden), JSON.stringify(s));
+    s && s.amplifier === 1 && s.duration > 0 && s.hidden && /Duration: -1/.test(s.hidden), JSON.stringify(s));
 
   clearSlot(7);
   await sleep(1500);
@@ -189,8 +195,8 @@ async function main() {
   check('milk / effect clear: endless effect comes right back', s && s.duration === -1, JSON.stringify(s));
 
   const shulkerItems = Array.from({ length: 8 }, (_, i) =>
-    `{slot:${i},item:{id:"minecraft:potion",count:1,components:{"minecraft:potion_contents":{potion:"minecraft:swiftness"}}}}`).join(',');
-  send(`item replace entity ${BOT} enderchest.10 with minecraft:shulker_box[minecraft:container=[${shulkerItems}]]`);
+    `{Slot:${i}b,id:"minecraft:potion",Count:1b,tag:{Potion:"minecraft:swiftness"}}`).join(',');
+  send(`item replace entity ${BOT} enderchest.10 with minecraft:shulker_box{BlockEntityTag:{Items:[${shulkerItems}]}}`);
   await sleep(1500);
   s = effect(await effects(), 'speed');
   check('potions inside a shulker box in the Ender Chest count', s && s.duration === -1, JSON.stringify(s));
@@ -224,6 +230,15 @@ async function main() {
   s = effect(await effects(), 'strength');
   check('8 Strength II potions upgrade to endless Strength II', s && s.amplifier === 1 && s.duration === -1, JSON.stringify(s));
 
+  messages.length = 0;
+  bot.setSettings({ locale: 'ru_ru' });
+  await sleep(500);
+  bot.chat('/enderbrews');
+  await sleep(1000);
+  check('/enderbrews answers in the language the client reports', messages.some(m => /[А-Яа-я]/.test(m)), JSON.stringify(messages));
+  bot.setSettings({ locale: 'en_us' });
+  await sleep(500);
+
   // From here on the bot acts like a client that has the mod installed.
   check('vanilla client gets no status packets', statuses.length === 0, JSON.stringify(statuses));
   check('chat list carries the hidden marker for modded clients', rawMessages.some(m => m.includes('enderbrews:list')), rawMessages.join(' | '));
@@ -253,8 +268,8 @@ async function main() {
   const dataDir = path.join(cwd, 'world', 'playerdata');
   const file = fs.readdirSync(dataDir).find(f => f.endsWith('.dat'));
   const { parsed } = await nbt.parse(zlib.gunzipSync(fs.readFileSync(path.join(dataDir, file))));
-  const saved = nbt.simplify(parsed).active_effects || [];
-  const leftovers = saved.filter(e => e.duration === -1);
+  const saved = nbt.simplify(parsed).ActiveEffects || [];
+  const leftovers = saved.filter(e => e.Duration === -1);
   check('endless effects are not saved when the player leaves', leftovers.length === 0, JSON.stringify(saved));
 
   return finish();

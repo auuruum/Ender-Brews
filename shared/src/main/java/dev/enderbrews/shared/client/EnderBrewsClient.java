@@ -9,7 +9,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 
 /**
@@ -25,15 +24,8 @@ import net.minecraft.world.item.ItemStack;
  */
 public final class EnderBrewsClient {
 
-    //#if >=1.21.9
-    public static final KeyMapping.Category KEY_CATEGORY = KeyMapping.Category.register(
-            ResourceLocation.fromNamespaceAndPath(Protocol.NAMESPACE, "main"));
-    public static final KeyMapping PAUSE_ALL_KEY = new KeyMapping("key.enderbrews.pause_all",
-            InputConstants.Type.KEYSYM, InputConstants.UNKNOWN.getValue(), KEY_CATEGORY);
-    //#else
     public static final KeyMapping PAUSE_ALL_KEY = new KeyMapping("key.enderbrews.pause_all",
             InputConstants.Type.KEYSYM, InputConstants.UNKNOWN.getValue(), "key.categories.enderbrews");
-    //#endif
 
     private static ClientPlatform platform;
     private static Protocol.Snapshot snapshot;

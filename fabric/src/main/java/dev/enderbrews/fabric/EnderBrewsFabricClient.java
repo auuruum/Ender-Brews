@@ -2,7 +2,6 @@ package dev.enderbrews.fabric;
 
 import dev.enderbrews.fabric.client.ClientPlatform;
 import dev.enderbrews.fabric.client.EnderBrewsClient;
-import dev.enderbrews.fabric.common.EnderBrewsPayloads;
 import java.util.List;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -45,17 +44,19 @@ public final class EnderBrewsFabricClient implements ClientModInitializer {
 
             @Override
             public boolean canSendPause() {
-                return ClientPlayNetworking.canSend(EnderBrewsPayloads.Pause.TYPE);
+                return ClientPlayNetworking.canSend(EnderBrewsFabric.PAUSE);
             }
 
             @Override
             public void sendPause(byte[] data) {
-                ClientPlayNetworking.send(new EnderBrewsPayloads.Pause(data));
+                ClientPlayNetworking.send(EnderBrewsFabric.PAUSE, EnderBrewsFabric.buffer(data));
             }
         });
 
-        ClientPlayNetworking.registerGlobalReceiver(EnderBrewsPayloads.Status.TYPE, (payload, context) ->
-                EnderBrewsClient.statusReceived(payload.data()));
+        ClientPlayNetworking.registerGlobalReceiver(EnderBrewsFabric.STATUS, (client, handler, buf, responseSender) -> {
+            byte[] data = EnderBrewsFabric.bytes(buf);
+            client.execute(() -> EnderBrewsClient.statusReceived(data));
+        });
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> EnderBrewsClient.disconnected());
         ClientReceiveMessageEvents.ALLOW_GAME.register((message, overlay) -> {
             if (!overlay) {
@@ -63,19 +64,14 @@ public final class EnderBrewsFabricClient implements ClientModInitializer {
             }
             return true;
         });
-        ItemTooltipCallback.EVENT.register((stack, context, type, lines) -> EnderBrewsClient.appendTooltip(stack, lines));
+        ItemTooltipCallback.EVENT.register((stack, context, lines) -> EnderBrewsClient.appendTooltip(stack, lines));
         KeyBindingHelper.registerKeyBinding(EnderBrewsClient.PAUSE_ALL_KEY);
         ClientTickEvents.END_CLIENT_TICK.register(client -> EnderBrewsClient.clientTick());
         ScreenEvents.AFTER_INIT.register((client, screen, width, height) -> {
             ScreenEvents.afterRender(screen).register((s, graphics, mouseX, mouseY, delta) ->
                     EnderBrewsClient.renderScreen(s, graphics, mouseX, mouseY));
-            //#if >=1.21.9
-            ScreenMouseEvents.allowMouseClick(screen).register((s, click) ->
-                    !EnderBrewsClient.mouseClicked(s, click.x(), click.y(), click.button()));
-            //#else
             ScreenMouseEvents.allowMouseClick(screen).register((s, mouseX, mouseY, button) ->
                     !EnderBrewsClient.mouseClicked(s, mouseX, mouseY, button));
-            //#endif
         });
     }
 }

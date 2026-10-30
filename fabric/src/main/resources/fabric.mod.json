@@ -23,6 +23,9 @@
         ]
     },
     "accessWidener": "enderbrews.accesswidener",
+    "mixins": [
+        "enderbrews.mixins.json"
+    ],
     "depends": {
         "fabricloader": ">=${fabric_loader_min_version}",
         "fabric-lifecycle-events-v1": "*",

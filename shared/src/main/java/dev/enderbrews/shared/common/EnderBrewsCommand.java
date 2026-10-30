@@ -16,7 +16,6 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.arguments.ResourceLocationArgument;
-import net.minecraft.core.Holder;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
@@ -52,11 +51,7 @@ final class EnderBrewsCommand {
                 .then(Commands.literal("pause").then(effectArgument(true)))
                 .then(Commands.literal("resume").then(effectArgument(false)))
                 .then(Commands.literal("reload")
-                        //#if >=1.21.11
-                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
-                        //#else
                         .requires(source -> source.hasPermission(2))
-                        //#endif
                         .executes(EnderBrewsCommand::reload)));
     }
 
@@ -116,15 +111,10 @@ final class EnderBrewsCommand {
                     line.append(" ").append(text(locale, "button." + action)
                             .withStyle(Style.EMPTY
                                     .withColor(paused ? ChatFormatting.GREEN : ChatFormatting.YELLOW)
-                                    //#if >=1.21.5
-                                    .withClickEvent(new ClickEvent.RunCommand("/enderbrews " + action + " " + status.effectId()))
-                                    .withHoverEvent(new HoverEvent.ShowText(text(locale, "hover." + action)))));
-                                    //#else
                                     .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
                                             "/enderbrews " + action + " " + status.effectId()))
                                     .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
                                             text(locale, "hover." + action)))));
-                                    //#endif
                 }
             }
             case PROGRESS -> line.append(Component.literal("· ").withStyle(ChatFormatting.DARK_GRAY))
@@ -156,7 +146,7 @@ final class EnderBrewsCommand {
             return 0;
         }
         String effectId = ResourceLocationArgument.getId(ctx, "effect").toString();
-        Optional<Holder.Reference<MobEffect>> effect = VanillaEffects.holder(effectId);
+        Optional<MobEffect> effect = VanillaEffects.effect(effectId);
         if (effect.isEmpty()) {
             player.sendSystemMessage(format(locale, "effect.unknown", Component.literal(effectId)).withStyle(ChatFormatting.RED));
             return 0;
@@ -187,8 +177,8 @@ final class EnderBrewsCommand {
 
     /** Effect names use vanilla translation keys, so every client shows them in its own language. */
     private static MutableComponent effectName(String effectId, int amplifier) {
-        MutableComponent name = VanillaEffects.holder(effectId)
-                .map(effect -> Component.translatable(effect.value().getDescriptionId()))
+        MutableComponent name = VanillaEffects.effect(effectId)
+                .map(effect -> Component.translatable(effect.getDescriptionId()))
                 .orElseGet(() -> Component.literal(effectId));
         if (amplifier >= 1 && amplifier <= 5) {
             name.append(" ").append(Component.translatable("potion.potency." + amplifier));
@@ -199,7 +189,7 @@ final class EnderBrewsCommand {
     }
 
     private static String locale(ServerPlayer player) {
-        return player.clientInformation().language();
+        return EnderBrews.language(player);
     }
 
     private static MutableComponent text(String locale, String key) {
